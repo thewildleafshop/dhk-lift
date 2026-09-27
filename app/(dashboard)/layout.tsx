@@ -34,6 +34,7 @@ const getNavItems = (role: string) => {
 
   const roleSpecificItems: Record<string, any[]> = {
     MEMBER: [
+      { href: "/dashboard/applications", label: "My Applications", icon: FileText }, // ✅ ADDED
       { href: "/dashboard/donations", label: "My Donations", icon: Heart },
       { href: "/dashboard/impact", label: "My Impact", icon: TrendingUp },
       { href: "/dashboard/saved", label: "Saved Items", icon: Bookmark },
@@ -51,8 +52,8 @@ const getNavItems = (role: string) => {
       { href: "/healthcare/claims/submit", label: "Submit Claim", icon: FileText },
     ],
     VOLUNTEER: [
-  { href: "/stories", label: "Impact Stories", icon: TrendingUp },
-],
+      { href: "/stories", label: "Impact Stories", icon: TrendingUp },
+    ],
     PARTNER: [
       { href: "/partner", label: "Partner Portal", icon: Briefcase },
     ],
@@ -65,7 +66,6 @@ const getNavItems = (role: string) => {
 
   return [...commonStart, ...roleItems, ...commonEnd];
 };
-
 export default function DashboardLayout({
   children,
 }: {

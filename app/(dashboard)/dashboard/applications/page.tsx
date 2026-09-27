@@ -1,12 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   FileText,
   Search,
   Filter,
-  ChevronRight,
   Clock,
   CheckCircle,
   XCircle,
@@ -15,10 +14,11 @@ import {
   Eye,
   Plus,
   Inbox,
+  Loader2,
 } from "lucide-react";
 
 // ============ TYPES ============
-type ApplicationStatus = 
+type ApplicationStatus =
   | "DRAFT"
   | "SUBMITTED"
   | "VERIFICATION"
@@ -28,18 +28,19 @@ type ApplicationStatus =
   | "DENIED"
   | "COMPLETED";
 
-type Application = {
+interface Application {
   id: string;
-  referenceNumber: string;
-  program: string;
-  programColor: string;
-  programBg: string;
+  confirmationNo: string;
   status: ApplicationStatus;
-  submittedDate: string;
-  lastUpdate: string;
-  amountRequested?: string;
-  nextAction?: string;
-};
+  amountRequested: number | null;
+  data: any;
+  notes: string | null;
+  submittedAt: string | null;
+  createdAt: string;
+  user: { id: string; name: string; email: string };
+  program: { id: string; name: string; slug: string; category: string } | null;
+  documentCount: number;
+}
 
 // ============ STATUS HELPERS ============
 const statusConfig: Record<ApplicationStatus, { label: string; color: string; bg: string; icon: any }> = {
@@ -53,74 +54,95 @@ const statusConfig: Record<ApplicationStatus, { label: string; color: string; bg
   COMPLETED: { label: "Completed", color: "text-success", bg: "bg-success/10", icon: CheckCircle },
 };
 
-// ============ DEMO DATA ============
-const demoApplications: Application[] = [
-  {
-    id: "1",
-    referenceNumber: "APP-23043012",
-    program: "Financial Assistance",
-    programColor: "text-gold",
-    programBg: "bg-gold/10",
-    status: "UNDER_REVIEW",
-    submittedDate: "Apr 5, 2026",
-    lastUpdate: "2 days ago",
-    amountRequested: "$500",
-  },
-  {
-    id: "2",
-    referenceNumber: "APP-23031987",
-    program: "Education Support",
-    programColor: "text-teal",
-    programBg: "bg-teal/10",
-    status: "APPROVED",
-    submittedDate: "Feb 18, 2026",
-    lastUpdate: "1 week ago",
-    amountRequested: "$300",
-    nextAction: "Funds will be disbursed within 5 business days.",
-  },
-  {
-    id: "3",
-    referenceNumber: "APP-23028765",
-    program: "Medical Equipment",
-    programColor: "text-purple",
-    programBg: "bg-purple/10",
-    status: "ADDITIONAL_INFO",
-    submittedDate: "Jan 10, 2026",
-    lastUpdate: "3 days ago",
-    nextAction: "Please upload updated medical report.",
-  },
-  {
-    id: "4",
-    referenceNumber: "APP-23015432",
-    program: "Food Security",
-    programColor: "text-gold",
-    programBg: "bg-gold/10",
-    status: "COMPLETED",
-    submittedDate: "Nov 22, 2025",
-    lastUpdate: "1 month ago",
-    amountRequested: "$200",
-  },
-];
+// ============ PROGRAM COLOR MAPPING ============
+const getProgramColor = (programName: string) => {
+  const map: Record<string, { color: string; bg: string }> = {
+    "LIFT Health": { color: "text-teal", bg: "bg-teal/10" },
+    "LIFT Protect": { color: "text-purple", bg: "bg-purple/10" },
+    "LIFT Ability": { color: "text-purple", bg: "bg-purple/10" },
+    "LIFT Community": { color: "text-gold", bg: "bg-gold/10" },
+    "Children & Families": { color: "text-navy", bg: "bg-navy/10" },
+    "Food Security": { color: "text-gold", bg: "bg-gold/10" },
+    "Disaster Relief": { color: "text-error", bg: "bg-error/10" },
+  };
+  return map[programName] || { color: "text-navy", bg: "bg-navy/10" };
+};
 
-// ============ MAIN COMPONENT ============
+// ============ NEXT ACTION HELPER ============
+const getNextAction = (status: ApplicationStatus, notes: string | null) => {
+  if (status === "APPROVED") {
+    return notes || "Your application has been approved. Funds will be disbursed soon.";
+  }
+  if (status === "ADDITIONAL_INFO") {
+    return notes || "Please upload the requested additional information.";
+  }
+  return null;
+};
+
 export default function MyApplicationsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<ApplicationStatus | "ALL">("ALL");
 
-  const filteredApplications = demoApplications.filter((app) => {
-    const matchesSearch = 
-      app.program.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      app.referenceNumber.toLowerCase().includes(searchQuery.toLowerCase());
+  // ✅ API se data fetch karne ke liye states
+  const [applications, setApplications] = useState<Application[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // ✅ API se data fetch karein
+  useEffect(() => {
+    async function fetchApplications() {
+      try {
+        setLoading(true);
+        const res = await fetch("/api/applications");
+        if (!res.ok) throw new Error("Failed to fetch applications");
+        const data = await res.json();
+        setApplications(data);
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchApplications();
+  }, []);
+
+  const filteredApplications = applications.filter((app) => {
+    const programName = app.program?.name || "";
+    const matchesSearch =
+      programName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      app.confirmationNo.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === "ALL" || app.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
   const stats = {
-    total: demoApplications.length,
-    inReview: demoApplications.filter(a => ["SUBMITTED", "VERIFICATION", "UNDER_REVIEW"].includes(a.status)).length,
-    actionNeeded: demoApplications.filter(a => a.status === "ADDITIONAL_INFO").length,
-    approved: demoApplications.filter(a => ["APPROVED", "COMPLETED"].includes(a.status)).length,
+    total: applications.length,
+    inReview: applications.filter((a) => ["SUBMITTED", "VERIFICATION", "UNDER_REVIEW"].includes(a.status)).length,
+    actionNeeded: applications.filter((a) => a.status === "ADDITIONAL_INFO").length,
+    approved: applications.filter((a) => ["APPROVED", "COMPLETED"].includes(a.status)).length,
   };
+
+  // ============ LOADING STATE ============
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center">
+          <Loader2 className="w-10 h-10 text-navy animate-spin mx-auto mb-4" />
+          <p className="text-ink/60">Loading your applications...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ============ ERROR STATE ============
+  if (error) {
+    return (
+      <div className="bg-white rounded-card p-12 text-center border border-gray-100">
+        <p className="text-error font-semibold mb-2">Error loading applications</p>
+        <p className="text-ink/60 text-sm">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -166,7 +188,6 @@ export default function MyApplicationsPage() {
 
       {/* ================= FILTERS ================= */}
       <div className="bg-white rounded-card p-4 border border-gray-100 flex flex-col md:flex-row gap-3">
-        {/* Search */}
         <div className="relative flex-1">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-ink/40" />
           <input
@@ -178,7 +199,6 @@ export default function MyApplicationsPage() {
           />
         </div>
 
-        {/* Status Filter */}
         <div className="relative">
           <Filter className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-ink/40" />
           <select
@@ -202,8 +222,12 @@ export default function MyApplicationsPage() {
       {filteredApplications.length > 0 ? (
         <div className="space-y-4">
           {filteredApplications.map((app) => {
-            const status = statusConfig[app.status];
+            const status = statusConfig[app.status] || statusConfig.SUBMITTED;
             const StatusIcon = status.icon;
+            const programName = app.program?.name || "General Assistance";
+            const programColors = getProgramColor(programName);
+            const nextAction = getNextAction(app.status, app.notes);
+
             return (
               <div
                 key={app.id}
@@ -213,13 +237,13 @@ export default function MyApplicationsPage() {
                   
                   {/* Left: Info */}
                   <div className="flex items-start gap-4 flex-1">
-                    <div className={`${app.programBg} rounded-full p-3 shrink-0`}>
-                      <FileText className={`w-6 h-6 ${app.programColor}`} />
+                    <div className={`${programColors.bg} rounded-full p-3 shrink-0`}>
+                      <FileText className={`w-6 h-6 ${programColors.color}`} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="font-display font-bold text-navy text-lg">
-                          {app.program}
+                          {programName}
                         </h3>
                         <span className={`text-xs font-semibold ${status.color} ${status.bg} px-3 py-1 rounded-full flex items-center gap-1`}>
                           <StatusIcon className="w-3 h-3" />
@@ -229,19 +253,19 @@ export default function MyApplicationsPage() {
                       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-sm text-ink/60">
                         <span className="flex items-center gap-1">
                           <FileText className="w-3.5 h-3.5" />
-                          {app.referenceNumber}
+                          Ref: {app.confirmationNo.slice(0, 12)}
                         </span>
                         <span className="flex items-center gap-1">
                           <Calendar className="w-3.5 h-3.5" />
-                          Submitted: {app.submittedDate}
+                          Submitted: {app.submittedAt ? new Date(app.submittedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "Not submitted"}
                         </span>
                         {app.amountRequested && (
                           <span className="font-semibold text-navy">
-                            {app.amountRequested}
+                            ${app.amountRequested.toLocaleString()}
                           </span>
                         )}
                       </div>
-                      {app.nextAction && (
+                      {nextAction && (
                         <div className={`flex items-start gap-2 mt-3 p-3 rounded-input ${
                           app.status === "APPROVED" ? "bg-success/5 border border-success/20" : "bg-warning/5 border border-warning/20"
                         }`}>
@@ -251,7 +275,7 @@ export default function MyApplicationsPage() {
                           <p className={`text-xs ${
                             app.status === "APPROVED" ? "text-success" : "text-warning"
                           }`}>
-                            {app.nextAction}
+                            {nextAction}
                           </p>
                         </div>
                       )}
@@ -261,7 +285,7 @@ export default function MyApplicationsPage() {
                   {/* Right: Actions */}
                   <div className="flex items-center gap-3 shrink-0 md:flex-col md:items-end">
                     <p className="text-xs text-ink/50 md:text-right">
-                      Updated {app.lastUpdate}
+                      Updated {new Date(app.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                     </p>
                     <Link
                       href={`/dashboard/applications/${app.id}`}

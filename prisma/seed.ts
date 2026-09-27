@@ -76,6 +76,29 @@ async function main() {
 
   console.log(`✅ Partner: ${partner.orgName} (${partner.status})`);
 
+  // ============ PROGRAMS ============
+  console.log("\n🎯 Creating Programs...\n");
+
+  const programsData = [
+    { name: "LIFT Health", slug: "lift-health", description: "Access to quality healthcare and medical support for underserved communities.", category: "Healthcare", maxAmount: 10000, geography: "Global" },
+    { name: "LIFT Protect", slug: "lift-protect", description: "Confidential support for women and children affected by abuse and exploitation.", category: "Protection", maxAmount: 5000, geography: "Global" },
+    { name: "LIFT Ability", slug: "lift-ability", description: "Medical equipment, mobility aids, and support for people with disabilities.", category: "Disability Support", maxAmount: 8000, geography: "Global" },
+    { name: "LIFT Community", slug: "lift-community", description: "Building stronger communities through local projects and education support.", category: "Community Development", maxAmount: 15000, geography: "Global" },
+    { name: "Children & Families", slug: "children-families", description: "Supporting children and families with food, shelter, education, and healthcare.", category: "Family Support", maxAmount: 12000, geography: "Global" },
+    { name: "Food Security", slug: "food-security", description: "Providing nutritious meals to families facing hunger.", category: "Food Security", maxAmount: 10000, geography: "Global" },
+    { name: "Disaster Relief", slug: "disaster-relief", description: "Rapid response to natural disasters and emergencies.", category: "Emergency Relief", maxAmount: 20000, geography: "Global" },
+  ];
+
+  for (const program of programsData) {
+    await prisma.program.upsert({
+      where: { slug: program.slug },
+      update: {},
+      create: program,
+    });
+    console.log(`   🎯 ${program.name}`);
+  }
+  console.log(`   ✅ ${programsData.length} programs created`);
+
   // ============ PROJECTS ============
   console.log("\n📁 Creating Projects...\n");
 
@@ -100,7 +123,6 @@ async function main() {
   // ============ MILESTONES & EVIDENCE ============
   console.log("\n📋 Creating Milestones & Evidence...\n");
 
-  // Clean up old milestones to avoid duplicates
   await prisma.evidence.deleteMany({});
   await prisma.milestone.deleteMany({});
   console.log("   🧹 Cleaned old milestones & evidence\n");
@@ -126,17 +148,16 @@ async function main() {
         },
       });
 
-      // ============ FULL EVIDENCE FOR MILESTONE 3 ============
       if (m.title === "Milestone 3: Well Installation Complete") {
         const evidenceData = [
-          { type: "PHOTO", fileUrl: "https://placehold.co/600x400/0B468F/FFFFFF?text=Well+Installation+1", description: "Well installation photo 1" },
-          { type: "PHOTO", fileUrl: "https://placehold.co/600x400/12A8C0/FFFFFF?text=Well+Installation+2", description: "Well installation photo 2" },
-          { type: "PHOTO", fileUrl: "https://placehold.co/600x400/FFA20D/FFFFFF?text=Community+Using+Well", description: "Community using the new well" },
-          { type: "RECEIPT", fileUrl: "https://placehold.co/600x400/7A2C91/FFFFFF?text=Equipment+Receipt", description: "Equipment purchase receipt" },
-          { type: "INVOICE", fileUrl: "https://placehold.co/600x400/16845B/FFFFFF?text=Contractor+Invoice", description: "Contractor invoice for installation" },
-          { type: "DELIVERY", fileUrl: "https://placehold.co/600x400/B7791F/FFFFFF?text=Delivery+Confirmation", description: "Delivery confirmation document" },
-          { type: "REPORT", fileUrl: "https://placehold.co/600x400/1769AA/FFFFFF?text=Installation+Report", description: "Detailed installation report" },
-          { type: "INSPECTION", fileUrl: "https://placehold.co/600x400/B42318/FFFFFF?text=Inspection+Certificate", description: "Third-party inspection certificate" },
+          { type: "PHOTO", fileUrl: "https://placehold.co/600x400/0B468F/FFFFFF?text=Well+1", description: "Well installation photo 1" },
+          { type: "PHOTO", fileUrl: "https://placehold.co/600x400/12A8C0/FFFFFF?text=Well+2", description: "Well installation photo 2" },
+          { type: "PHOTO", fileUrl: "https://placehold.co/600x400/FFA20D/FFFFFF?text=Community", description: "Community using well" },
+          { type: "RECEIPT", fileUrl: "https://placehold.co/600x400/7A2C91/FFFFFF?text=Receipt", description: "Equipment receipt" },
+          { type: "INVOICE", fileUrl: "https://placehold.co/600x400/16845B/FFFFFF?text=Invoice", description: "Contractor invoice" },
+          { type: "DELIVERY", fileUrl: "https://placehold.co/600x400/B7791F/FFFFFF?text=Delivery", description: "Delivery confirmation" },
+          { type: "REPORT", fileUrl: "https://placehold.co/600x400/1769AA/FFFFFF?text=Report", description: "Installation report" },
+          { type: "INSPECTION", fileUrl: "https://placehold.co/600x400/B42318/FFFFFF?text=Inspection", description: "Inspection certificate" },
         ];
 
         for (const ev of evidenceData) {
@@ -153,13 +174,12 @@ async function main() {
         }
         console.log(`      📎 Milestone 3: 8 evidence files added`);
       } else if (m.status === "COMPLETED") {
-        // Simple evidence for other completed milestones
         await prisma.evidence.create({
           data: {
             projectId: waterProject.id,
             milestoneId: milestone.id,
             type: "PHOTO",
-            fileUrl: "https://placehold.co/600x400/0B468F/FFFFFF?text=Progress+Photo",
+            fileUrl: "https://placehold.co/600x400/0B468F/FFFFFF?text=Progress",
             description: `Evidence for ${m.title}`,
             visibility: "PUBLIC",
           },
@@ -226,6 +246,102 @@ async function main() {
   }
 
   console.log(`   ⏳ Wheelchair & Orphan: No milestones yet (pending approval)`);
+
+  // ============ APPLICATIONS ============
+  console.log("\n📝 Creating Test Applications...\n");
+
+  const applicantUser = await prisma.user.findUnique({ where: { email: "applicant@dhklift.org" } });
+  const memberUser = await prisma.user.findUnique({ where: { email: "member@dhklift.org" } });
+
+  if (applicantUser && memberUser) {
+    const applicationsData = [
+      {
+        userId: applicantUser.id,
+        status: "SUBMITTED" as const,
+        amountRequested: 5000,
+        data: {
+          programName: "LIFT Health",
+          assistanceType: "Medical Treatment",
+          patientName: "Ahmed Khan",
+          condition: "Chronic Kidney Disease",
+          hospital: "Aga Khan Hospital, Karachi",
+          monthlyIncome: 25000,
+          householdSize: 6,
+          requestedAmount: 5000,
+          contactPhone: "+92-300-1234567",
+        },
+        notes: "Patient requires dialysis 3 times a week.",
+      },
+      {
+        userId: applicantUser.id,
+        status: "UNDER_REVIEW" as const,
+        amountRequested: 3000,
+        data: {
+          programName: "LIFT Ability",
+          assistanceType: "Wheelchair",
+          patientName: "Fatima Bibi",
+          condition: "Spinal Cord Injury",
+          hospital: "Lahore General Hospital",
+          monthlyIncome: 15000,
+          householdSize: 4,
+          requestedAmount: 3000,
+          contactPhone: "+92-321-9876543",
+        },
+        notes: "Patient needs a motorized wheelchair.",
+      },
+      {
+        userId: memberUser.id,
+        status: "APPROVED" as const,
+        amountRequested: 2500,
+        data: {
+          programName: "LIFT Community",
+          assistanceType: "Educational Support",
+          studentName: "Ali Hassan",
+          school: "Government School, Islamabad",
+          grade: "Grade 8",
+          monthlyIncome: 20000,
+          householdSize: 5,
+          requestedAmount: 2500,
+          contactPhone: "+92-333-5556667",
+        },
+        notes: "Approved for annual school fees and supplies.",
+      },
+      {
+        userId: applicantUser.id,
+        status: "DRAFT" as const,
+        amountRequested: null,
+        data: {
+          programName: "LIFT Health",
+          assistanceType: "Disease Fund",
+          patientName: "Not completed",
+        },
+        notes: null,
+      },
+    ];
+
+    for (const app of applicationsData) {
+      const program = await prisma.program.findFirst({
+        where: { name: app.data.programName },
+      });
+
+      await prisma.application.create({
+        data: {
+          userId: app.userId,
+          programId: program?.id || null,
+          status: app.status,
+          amountRequested: app.amountRequested,
+          data: app.data,
+          notes: app.notes,
+          submittedAt: app.status !== "DRAFT" ? new Date() : null,
+          reviewedAt: ["APPROVED", "DENIED", "COMPLETED"].includes(app.status) ? new Date() : null,
+        },
+      });
+      console.log(`   📄 Application: ${app.data.programName} (${app.status})`);
+    }
+    console.log(`   ✅ ${applicationsData.length} applications created`);
+  } else {
+    console.log(`   ⚠️ Applicant or Member user not found, skipping applications`);
+  }
 
   console.log("\n🎉 Seed complete!\n");
   console.log("========================================");
