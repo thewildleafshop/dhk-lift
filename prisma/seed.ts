@@ -664,6 +664,65 @@ async function main() {
   } else {
     console.log(`   ⚠️ Story users not found, skipping stories`);
   }
+    // ============ DEFAULT SETTINGS ============
+  console.log("\n⚙️  Creating Default Settings...\n");
+
+  const defaultSettings = [
+    // General
+    { key: "siteName", value: "DHK LIFT", category: "general" },
+    { key: "siteTagline", value: "A Global Humanitarian Platform", category: "general" },
+    { key: "contactEmail", value: "support@dhklift.org", category: "general" },
+    { key: "contactPhone", value: "+92 300 1234567", category: "general" },
+    { key: "address", value: "Karachi, Pakistan", category: "general" },
+    { key: "timezone", value: "Asia/Karachi (PKT)", category: "general" },
+    { key: "currency", value: "USD ($)", category: "general" },
+
+    // Payment
+    { key: "stripePublicKey", value: "", category: "payment" },
+    { key: "stripeSecretKey", value: "", category: "payment" },
+    { key: "minDonation", value: "5", category: "payment" },
+    { key: "maxDonation", value: "100000", category: "payment" },
+    { key: "processingFeePercent", value: "2.9", category: "payment" },
+    { key: "processingFeeFixed", value: "0.3", category: "payment" },
+    { key: "allowRecurring", value: "true", category: "payment" },
+    { key: "allowAnonymous", value: "true", category: "payment" },
+
+    // Email
+    { key: "senderName", value: "DHK LIFT", category: "email" },
+    { key: "senderEmail", value: "noreply@dhklift.org", category: "email" },
+    { key: "replyTo", value: "support@dhklift.org", category: "email" },
+    { key: "smtpHost", value: "smtp.sendgrid.net", category: "email" },
+    { key: "smtpPort", value: "587", category: "email" },
+    { key: "smtpUser", value: "apikey", category: "email" },
+    { key: "smtpPassword", value: "", category: "email" },
+
+    // Notifications
+    { key: "notify_newApplication", value: "true", category: "notifications" },
+    { key: "notify_newDonation", value: "true", category: "notifications" },
+    { key: "notify_largeDonation", value: "true", category: "notifications" },
+    { key: "notify_newPartner", value: "true", category: "notifications" },
+    { key: "notify_verificationRequest", value: "true", category: "notifications" },
+    { key: "notify_failedPayment", value: "true", category: "notifications" },
+    { key: "notify_dailyDigest", value: "true", category: "notifications" },
+    { key: "notify_weeklyReport", value: "false", category: "notifications" },
+
+    // Security
+    { key: "enforceMFA", value: "true", category: "security" },
+    { key: "sessionTimeout", value: "60", category: "security" },
+    { key: "passwordMinLength", value: "8", category: "security" },
+    { key: "passwordRequireSpecial", value: "true", category: "security" },
+    { key: "maxLoginAttempts", value: "5", category: "security" },
+    { key: "ipWhitelist", value: "false", category: "security" },
+  ];
+
+  for (const setting of defaultSettings) {
+    await prisma.setting.upsert({
+      where: { key: setting.key },
+      update: {},
+      create: setting,
+    });
+  }
+  console.log(`   ✅ ${defaultSettings.length} default settings created`);
   console.log("\n🎉 Seed complete!\n");
   console.log("========================================");
   console.log("LOGIN CREDENTIALS:");
