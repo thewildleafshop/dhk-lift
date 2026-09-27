@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 
 export async function POST(req: Request) {
   try {
@@ -8,7 +9,7 @@ export async function POST(req: Request) {
 
     if (!name || !email || !password) {
       return NextResponse.json(
-        { error: "Name, email, and password are required" },
+        { error: "All fields are required" },
         { status: 400 }
       );
     }
@@ -26,12 +27,12 @@ export async function POST(req: Request) {
 
     if (existingUser) {
       return NextResponse.json(
-        { error: "User with this email already exists" },
+        { error: "Email already registered" },
         { status: 400 }
       );
     }
 
-    const hashedPassword = await bcrypt.hash(password, 12);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await prisma.user.create({
       data: {
@@ -43,21 +44,42 @@ export async function POST(req: Request) {
       },
     });
 
+    // Create email verification token
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+    await prisma.verificationToken.create({
+      data: {
+        identifier: email,
+        token: verificationToken,
+        expires,
+      },
+    });
+
+    // In production: Send verification email
+    const verifyLink = `${process.env.NEXT_PUBLIC_APP_URL}/verify-email?token=${verificationToken}`;
+    
+    console.log("========================================");
+    console.log("EMAIL VERIFICATION LINK:");
+    console.log(verifyLink);
+    console.log("========================================");
+
+    // TODO: Send email via SendGrid/Resend
+    // await sendVerificationEmail(email, verifyLink);
+
     return NextResponse.json(
       {
-        success: true,
-        message: "User registered successfully",
+        message: "Account created successfully",
         user: {
           id: user.id,
           name: user.name,
           email: user.email,
-          role: user.role,
         },
       },
       { status: 201 }
     );
   } catch (error) {
-    console.error("Registration error:", error);
+    console.error("Register error:", error);
     return NextResponse.json(
       { error: "Something went wrong" },
       { status: 500 }

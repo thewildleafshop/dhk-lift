@@ -1,16 +1,9 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { PrismaAdapter } from "@auth/prisma-adapter";
-import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { prisma } from "@/lib/prisma";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: PrismaAdapter(prisma),
-  session: { strategy: "jwt" },
-  pages: {
-    signIn: "/login",
-    error: "/login",
-  },
   providers: [
     CredentialsProvider({
       name: "credentials",
@@ -20,7 +13,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          throw new Error("Email and password required");
+          throw new Error("Invalid credentials");
         }
 
         const user = await prisma.user.findUnique({
@@ -28,20 +21,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         });
 
         if (!user || !user.password) {
-          throw new Error("Invalid credentials");
+          throw new Error("User not found");
         }
 
-        const isValid = await bcrypt.compare(
+        const isPasswordValid = await bcrypt.compare(
           credentials.password as string,
           user.password
         );
 
-        if (!isValid) {
-          throw new Error("Invalid credentials");
-        }
-
-        if (user.status === "SUSPENDED") {
-          throw new Error("Account suspended");
+        if (!isPasswordValid) {
+          throw new Error("Invalid password");
         }
 
         return {
@@ -49,24 +38,33 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           email: user.email,
           name: user.name,
           role: user.role,
-        } as any;
+        };
       },
     }),
   ],
+  session: {
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
+  pages: {
+    signIn: "/login",
+    error: "/login",
+  },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.role = (user as any).role;
         token.id = user.id;
+        token.role = (user as any).role;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as any).role = token.role;
         (session.user as any).id = token.id;
+        (session.user as any).role = token.role;
       }
       return session;
     },
   },
+  secret: process.env.NEXTAUTH_SECRET,
 });

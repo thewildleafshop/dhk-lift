@@ -1,0 +1,535 @@
+import Link from "next/link";
+import {
+  Heart,
+  Search,
+  Filter,
+  ChevronRight,
+  Stethoscope,
+  Activity,
+  Pill,
+  HeartPulse,
+  Brain,
+  Bone,
+  Eye,
+  Baby,
+  Droplet,
+  Shield,
+  CheckCircle,
+  Users,
+  DollarSign,
+  TrendingUp,
+  Clock,
+  Building2,
+} from "lucide-react";
+
+// ============ DISEASE FUNDS DATA ============
+const funds = [
+  {
+    slug: "cancer-care-fund",
+    name: "Cancer Care Fund",
+    disease: "Cancer",
+    icon: HeartPulse,
+    color: "text-purple",
+    bgColor: "bg-purple/10",
+    description: "Support for cancer patients covering treatment, medication, and diagnostic expenses.",
+    balance: 450000,
+    committed: 320000,
+    totalRaised: 1200000,
+    applications: 245,
+    funded: 180,
+    status: "Active",
+  },
+  {
+    slug: "heart-disease-fund",
+    name: "Heart Disease Fund",
+    disease: "Cardiovascular",
+    icon: Heart,
+    color: "text-error",
+    bgColor: "bg-error/10",
+    description: "Assistance for heart surgeries, cardiac care, and cardiovascular treatments.",
+    balance: 280000,
+    committed: 180000,
+    totalRaised: 850000,
+    applications: 180,
+    funded: 125,
+    status: "Active",
+  },
+  {
+    slug: "kidney-disease-fund",
+    name: "Kidney Disease Fund",
+    disease: "Renal",
+    icon: Droplet,
+    color: "text-info",
+    bgColor: "bg-info/10",
+    description: "Dialysis support, kidney transplant assistance, and renal care for patients.",
+    balance: 150000,
+    committed: 95000,
+    totalRaised: 420000,
+    applications: 95,
+    funded: 68,
+    status: "Active",
+  },
+  {
+    slug: "diabetes-care-fund",
+    name: "Diabetes Care Fund",
+    disease: "Diabetes",
+    icon: Activity,
+    color: "text-teal",
+    bgColor: "bg-teal/10",
+    description: "Insulin support, diabetes management, and complication care for patients.",
+    balance: 95000,
+    committed: 48000,
+    totalRaised: 280000,
+    applications: 120,
+    funded: 88,
+    status: "Active",
+  },
+  {
+    slug: "rare-disease-fund",
+    name: "Rare Disease Fund",
+    disease: "Multiple Conditions",
+    icon: Shield,
+    color: "text-warning",
+    bgColor: "bg-warning/10",
+    description: "Support for patients with rare and orphan diseases requiring specialized treatment.",
+    balance: 25000,
+    committed: 25000,
+    totalRaised: 120000,
+    applications: 35,
+    funded: 22,
+    status: "Paused",
+  },
+  {
+    slug: "children-health-fund",
+    name: "Children Health Fund",
+    disease: "Pediatric",
+    icon: Baby,
+    color: "text-gold",
+    bgColor: "bg-gold/10",
+    description: "Healthcare support for children with critical illnesses and congenital conditions.",
+    balance: 180000,
+    committed: 120000,
+    totalRaised: 550000,
+    applications: 145,
+    funded: 102,
+    status: "Active",
+  },
+  {
+    slug: "mental-health-fund",
+    name: "Mental Health Fund",
+    disease: "Mental Health",
+    icon: Brain,
+    color: "text-navy",
+    bgColor: "bg-navy/10",
+    description: "Counseling, therapy, and psychiatric support for mental health patients.",
+    balance: 85000,
+    committed: 42000,
+    totalRaised: 195000,
+    applications: 68,
+    funded: 45,
+    status: "Active",
+  },
+  {
+    slug: "orthopedic-fund",
+    name: "Orthopedic Fund",
+    disease: "Bone & Joint",
+    icon: Bone,
+    color: "text-success",
+    bgColor: "bg-success/10",
+    description: "Assistance for bone surgeries, joint replacements, and orthopedic treatments.",
+    balance: 120000,
+    committed: 75000,
+    totalRaised: 320000,
+    applications: 78,
+    funded: 52,
+    status: "Active",
+  },
+  {
+    slug: "eye-care-fund",
+    name: "Eye Care Fund",
+    disease: "Ophthalmology",
+    icon: Eye,
+    color: "text-teal",
+    bgColor: "bg-teal/10",
+    description: "Eye surgeries, vision restoration, and ophthalmology treatments for patients.",
+    balance: 75000,
+    committed: 38000,
+    totalRaised: 180000,
+    applications: 92,
+    funded: 70,
+    status: "Active",
+  },
+];
+
+// ============ CATEGORIES ============
+const categories = [
+  { id: "all", label: "All Funds" },
+  { id: "active", label: "Active Funds" },
+  { id: "paused", label: "Paused" },
+];
+
+// ============ MAIN COMPONENT ============
+export default function DiseaseFundsPage() {
+  const stats = {
+    totalFunds: funds.length,
+    activeFunds: funds.filter((f) => f.status === "Active").length,
+    totalBalance: funds.reduce((sum, f) => sum + f.balance, 0),
+    totalPatients: funds.reduce((sum, f) => sum + f.funded, 0),
+  };
+
+  return (
+    <main className="min-h-screen bg-cloud">
+
+      {/* ================= HERO SECTION ================= */}
+      <section className="relative bg-navy text-white overflow-hidden">
+        <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-gold/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+        <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-error/20 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
+
+        <div className="max-w-container mx-auto px-6 py-16 md:py-24 relative z-10 text-center">
+          <div className="bg-gold/20 rounded-full p-4 w-fit mx-auto mb-6 animate-fade-in">
+            <Stethoscope className="w-10 h-10 text-gold" />
+          </div>
+          <p className="text-gold font-semibold tracking-wider uppercase text-xs md:text-sm animate-fade-in">
+            Disease Funds
+          </p>
+          <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mt-4 animate-fade-in-up">
+            Healthcare Support. <br />
+            <span className="text-gradient-gold">When You Need It Most.</span>
+          </h1>
+          <p className="text-lg text-white/80 max-w-2xl mx-auto mt-6 leading-relaxed animate-fade-in-up delay-100">
+            DHK LIFT's disease-specific funds provide financial support for medical treatment, 
+            medication, and healthcare expenses to patients in need.
+          </p>
+
+          {/* Search Bar */}
+          <div className="max-w-2xl mx-auto mt-8 animate-fade-in-up delay-200">
+            <div className="relative">
+              <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-ink/40" />
+              <input
+                type="text"
+                placeholder="Search by disease, condition, or fund name..."
+                className="w-full pl-14 pr-32 py-4 md:py-5 rounded-input border-0 bg-white text-ink placeholder:text-ink/40 focus:outline-none focus:ring-4 focus:ring-gold/30 shadow-2xl text-base"
+              />
+              <button className="absolute right-2 top-1/2 -translate-y-1/2 bg-gold text-ink font-semibold px-6 py-3 rounded-input hover:bg-gold/90 transition-colors text-sm">
+                Search
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ================= STATS BAR ================= */}
+      <section className="bg-white border-b border-gray-100">
+        <div className="max-w-container mx-auto px-6 py-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+            <div>
+              <p className="font-display text-2xl md:text-3xl font-bold text-navy">{stats.totalFunds}</p>
+              <p className="text-ink/70 mt-1 text-xs md:text-sm">Disease Funds</p>
+            </div>
+            <div>
+              <p className="font-display text-2xl md:text-3xl font-bold text-success">{stats.activeFunds}</p>
+              <p className="text-ink/70 mt-1 text-xs md:text-sm">Active Funds</p>
+            </div>
+            <div>
+              <p className="font-display text-2xl md:text-3xl font-bold text-gold">
+                ${(stats.totalBalance / 1000).toFixed(0)}K
+              </p>
+              <p className="text-ink/70 mt-1 text-xs md:text-sm">Available Balance</p>
+            </div>
+            <div>
+              <p className="font-display text-2xl md:text-3xl font-bold text-teal">{stats.totalPatients}+</p>
+              <p className="text-ink/70 mt-1 text-xs md:text-sm">Patients Funded</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ================= FILTERS ================= */}
+      <section className="max-w-container mx-auto px-6 py-8">
+        <div className="bg-white rounded-card p-4 shadow-sm border border-gray-100">
+          <div className="flex flex-wrap gap-2">
+            {categories.map((cat, i) => (
+              <button
+                key={cat.id}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                  i === 0
+                    ? "bg-navy text-white"
+                    : "bg-cloud text-ink/70 hover:bg-navy/5 hover:text-navy"
+                }`}
+              >
+                {cat.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ================= FUNDS GRID ================= */}
+      <section className="max-w-container mx-auto px-6 pb-16 md:pb-24">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {funds.map((fund) => {
+            const Icon = fund.icon;
+            const utilization = (fund.committed / fund.totalRaised) * 100;
+
+            return (
+              <Link
+                key={fund.slug}
+                href={`/healthcare/funds/${fund.slug}`}
+                className="card-hover bg-white rounded-card shadow-sm border border-gray-100 overflow-hidden flex flex-col group"
+              >
+                {/* Header */}
+                <div className="p-6 pb-0">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className={`${fund.bgColor} rounded-full p-3`}>
+                      <Icon className={`w-7 h-7 ${fund.color}`} />
+                    </div>
+                    <span className={`text-xs font-semibold px-3 py-1 rounded-full ${
+                      fund.status === "Active" ? "text-success bg-success/10" : "text-warning bg-warning/10"
+                    }`}>
+                      {fund.status}
+                    </span>
+                  </div>
+
+                  <h3 className="font-display font-bold text-navy text-xl">
+                    {fund.name}
+                  </h3>
+                  <p className="text-ink/50 text-xs mt-1">{fund.disease}</p>
+                  <p className="text-ink/70 text-sm mt-3 leading-relaxed line-clamp-3">
+                    {fund.description}
+                  </p>
+                </div>
+
+                {/* Stats */}
+                <div className="p-6 flex-1 flex flex-col justify-end">
+                  <div className="grid grid-cols-3 gap-2 mb-4">
+                    <div className="text-center p-2 bg-cloud rounded-input">
+                      <p className="font-display font-bold text-navy text-sm">
+                        ${(fund.balance / 1000).toFixed(0)}K
+                      </p>
+                      <p className="text-ink/50 text-xs mt-0.5">Available</p>
+                    </div>
+                    <div className="text-center p-2 bg-cloud rounded-input">
+                      <p className="font-display font-bold text-teal text-sm">
+                        {fund.funded}
+                      </p>
+                      <p className="text-ink/50 text-xs mt-0.5">Funded</p>
+                    </div>
+                    <div className="text-center p-2 bg-cloud rounded-input">
+                      <p className="font-display font-bold text-gold text-sm">
+                        {fund.applications}
+                      </p>
+                      <p className="text-ink/50 text-xs mt-0.5">Applied</p>
+                    </div>
+                  </div>
+
+                  {/* Utilization Bar */}
+                  <div className="mb-4">
+                    <div className="flex justify-between text-xs text-ink/60 mb-1">
+                      <span>Utilization</span>
+                      <span className="font-semibold text-navy">{utilization.toFixed(0)}%</span>
+                    </div>
+                    <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                      <div
+                        className={`h-1.5 rounded-full ${
+                          utilization > 80 ? "bg-error" : utilization > 60 ? "bg-warning" : "bg-gold"
+                        }`}
+                        style={{ width: `${Math.min(utilization, 100)}%` }}
+                      ></div>
+                    </div>
+                  </div>
+
+                  {/* Action */}
+                  <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                    <span className="text-sm font-semibold text-navy group-hover:text-gold transition-colors flex items-center gap-1">
+                      View Fund Details
+                      <ChevronRight className="w-4 h-4" />
+                    </span>
+                    <span className="text-xs text-ink/50">
+                      {fund.status === "Active" ? "Apply Available" : "Currently Paused"}
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* ================= HOW IT WORKS ================= */}
+      <section className="bg-white border-y border-gray-100">
+        <div className="max-w-container mx-auto px-6 py-16 md:py-24">
+          <div className="text-center mb-12">
+            <h2 className="font-display text-3xl md:text-4xl font-bold text-navy">
+              How Disease Funds Work
+            </h2>
+            <p className="text-ink/70 mt-3 max-w-2xl mx-auto">
+              Simple, transparent, and designed for patient dignity.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            {[
+              { step: "01", title: "Find Your Fund", desc: "Browse funds by disease or condition.", icon: Search },
+              { step: "02", title: "Check Eligibility", desc: "Review eligibility and required documents.", icon: CheckCircle },
+              { step: "03", title: "Apply Online", desc: "Submit your application with supporting documents.", icon: Stethoscope },
+              { step: "04", title: "Receive Support", desc: "Approved applications receive direct payment to providers.", icon: Heart },
+            ].map((item, i) => {
+              const Icon = item.icon;
+              return (
+                <div
+                  key={i}
+                  className="bg-cloud rounded-card p-6 border border-gray-100 card-hover text-center"
+                >
+                  <div className="bg-navy text-white font-display font-bold text-2xl w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4">
+                    {item.step}
+                  </div>
+                  <Icon className="w-7 h-7 text-gold mx-auto mb-3" />
+                  <h3 className="font-display font-bold text-navy text-base">{item.title}</h3>
+                  <p className="text-ink/70 text-sm mt-2 leading-relaxed">{item.desc}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ================= FOR PROVIDERS CTA ================= */}
+      <section className="max-w-container mx-auto px-6 py-16 md:py-24">
+        <div className="bg-gradient-to-br from-teal to-teal/90 rounded-card p-8 md:p-12 text-white relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+
+          <div className="relative z-10 grid lg:grid-cols-2 gap-8 items-center">
+            <div>
+              <div className="bg-white/20 backdrop-blur-sm rounded-full p-3 w-fit mb-4">
+                <Stethoscope className="w-7 h-7 text-white" />
+              </div>
+              <h2 className="font-display text-3xl md:text-4xl font-bold">
+                Are You a Healthcare Provider?
+              </h2>
+              <p className="text-white/80 mt-4 leading-relaxed">
+                Register your hospital, clinic, or medical facility to receive patients 
+                through DHK LIFT's disease fund programs. Get direct payments and help 
+                patients access quality healthcare.
+              </p>
+              <div className="mt-6 flex flex-wrap gap-4">
+                <Link
+                  href="/healthcare/providers/register"
+                  className="btn-lift bg-white text-teal font-semibold px-6 py-3.5 rounded-input hover:bg-white/90 transition-colors shadow-lg flex items-center gap-2 text-sm"
+                >
+                  <Building2 className="w-4 h-4" />
+                  Register as Provider
+                </Link>
+                <Link
+                  href="/healthcare/pharmacies/register"
+                  className="btn-lift border-2 border-white/40 text-white font-semibold px-6 py-3.5 rounded-input hover:bg-white/10 transition-colors flex items-center gap-2 text-sm"
+                >
+                  <Pill className="w-4 h-4" />
+                  Register Pharmacy
+                </Link>
+              </div>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-sm rounded-card p-6 border border-white/20">
+              <h3 className="font-display font-bold text-lg mb-4">
+                Provider Benefits
+              </h3>
+              <ul className="space-y-3">
+                {[
+                  "Receive patients through DHK LIFT platform",
+                  "Direct payment from disease funds",
+                  "Reduced paperwork and verification",
+                  "Access to global donor network",
+                  "Featured as a verified provider",
+                ].map((item, i) => (
+                  <li key={i} className="flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-white mt-0.5 shrink-0" />
+                    <span className="text-white/90 text-sm">{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ================= TRANSPARENCY ================= */}
+      <section className="max-w-container mx-auto px-6 pb-16 md:pb-24">
+        <div className="bg-navy text-white rounded-card p-8 md:p-12 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-gold/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+          <div className="relative z-10 grid lg:grid-cols-2 gap-8 items-center">
+            <div>
+              <div className="bg-white/10 rounded-full p-3 w-fit mb-4">
+                <Shield className="w-7 h-7 text-gold" />
+              </div>
+              <h2 className="font-display text-3xl md:text-4xl font-bold">
+                100% Transparent. <br />
+                100% Verified.
+              </h2>
+              <p className="text-white/80 mt-4 leading-relaxed">
+                Every disease fund transaction is documented with invoices, receipts, and provider 
+                verifications. Funds are directly paid to hospitals and pharmacies.
+              </p>
+              <Link
+                href="/transparency"
+                className="btn-lift inline-flex items-center gap-2 bg-gold text-ink font-semibold px-6 py-3.5 rounded-input hover:bg-gold/90 transition-colors shadow-lg mt-6 text-sm"
+              >
+                View Transparency Report
+                <ChevronRight className="w-4 h-4" />
+              </Link>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-sm rounded-card p-6 border border-white/20">
+              <div className="grid grid-cols-2 gap-4">
+                {[
+                  { value: "$3.2M+", label: "Total Distributed", icon: DollarSign },
+                  { value: "1,050+", label: "Patients Funded", icon: Users },
+                  { value: "9", label: "Disease Funds", icon: Heart },
+                  { value: "100%", label: "Verified Claims", icon: CheckCircle },
+                ].map((stat, i) => {
+                  const Icon = stat.icon;
+                  return (
+                    <div key={i} className="text-center p-4 bg-white/5 rounded-input">
+                      <Icon className="w-6 h-6 text-gold mx-auto mb-2" />
+                      <p className="font-display text-2xl font-bold">{stat.value}</p>
+                      <p className="text-white/60 text-xs mt-1">{stat.label}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ================= CTA ================= */}
+      <section className="bg-purple text-white">
+        <div className="max-w-container mx-auto px-6 py-16 md:py-20 text-center">
+          <h2 className="font-display text-3xl md:text-4xl font-bold">
+            Support a Disease Fund
+          </h2>
+          <p className="text-white/80 mt-4 max-w-2xl mx-auto leading-relaxed">
+            Your donation directly funds medical treatments for patients who cannot afford them. 
+            Every contribution saves a life.
+          </p>
+          <div className="mt-8 flex flex-wrap gap-4 justify-center">
+            <Link
+              href="/giving"
+              className="btn-lift bg-gold text-ink font-semibold px-8 py-4 rounded-input hover:bg-gold/90 transition-colors shadow-lg flex items-center gap-2"
+            >
+              <Heart className="w-5 h-5" />
+              Donate to a Fund
+            </Link>
+            <Link
+              href="/contact"
+              className="btn-lift border-2 border-white/30 text-white font-semibold px-8 py-4 rounded-input hover:bg-white/10 transition-colors flex items-center gap-2"
+            >
+              Contact Healthcare Team
+              <ChevronRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  );
+}
