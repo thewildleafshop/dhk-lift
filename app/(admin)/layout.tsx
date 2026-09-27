@@ -20,6 +20,7 @@ import {
   X,
   ChevronRight,
   Bell,
+  BookOpen,
   Search,
 } from "lucide-react";
 
@@ -32,6 +33,7 @@ const navItems = [
   { href: "/admin/projects", label: "Projects", icon: FolderKanban },
   { href: "/admin/verification", label: "Verification", icon: ShieldCheck },
   { href: "/admin/healthcare", label: "Healthcare", icon: Stethoscope },
+  { href: "/admin/stories", label: "Stories", icon: BookOpen }, 
   { href: "/admin/reports", label: "Reports", icon: FileBarChart },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
