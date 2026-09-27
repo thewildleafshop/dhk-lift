@@ -449,7 +449,48 @@ async function main() {
   } else {
     console.log(`   ⚠️ Member user not found, skipping donations`);
   }
+  // ============ MEMBERSHIP TIERS INFO ============
+  console.log("\n💎 Membership Tiers Info...\n");
 
+  // Note: Membership tiers Bronze/Silver/Gold/Platinum are defined in the enum
+  // We don't need a separate table for tiers, just the Membership records per user.
+  
+  // Update member's tier based on total donated
+  if (donorUser) {
+    const membership = await prisma.membership.findUnique({
+      where: { userId: donorUser.id },
+    });
+
+    if (membership) {
+      let newTier: "BRONZE" | "SILVER" | "GOLD" | "PLATINUM" = "BRONZE";
+      const total = Number(membership.totalDonated);
+      
+      if (total >= 10000) newTier = "PLATINUM";
+      else if (total >= 5000) newTier = "GOLD";
+      else if (total >= 1000) newTier = "SILVER";
+
+      await prisma.membership.update({
+        where: { userId: donorUser.id },
+        data: { tier: newTier },
+      });
+
+      console.log(`   💎 Member Tier: ${newTier} (Total Donated: $${total})`);
+    }
+  }
+
+  // Also create membership for applicant user if not exists
+  if (donorUser2) {
+    await prisma.membership.upsert({
+      where: { userId: donorUser2.id },
+      update: {},
+      create: {
+        userId: donorUser2.id,
+        tier: "BRONZE",
+        totalDonated: 0,
+      },
+    });
+    console.log(`   💎 Applicant Membership: BRONZE`);
+  }
   console.log("\n🎉 Seed complete!\n");
   console.log("========================================");
   console.log("LOGIN CREDENTIALS:");

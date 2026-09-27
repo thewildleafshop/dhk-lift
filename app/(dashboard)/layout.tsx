@@ -19,6 +19,7 @@ import {
   Stethoscope,
   Award,
   Briefcase,
+  Gift,
 } from "lucide-react";
 
 // ============ ROLE-BASED NAVIGATION ============
@@ -33,16 +34,18 @@ const getNavItems = (role: string) => {
   ];
 
   const roleSpecificItems: Record<string, any[]> = {
-    MEMBER: [
-      { href: "/dashboard/applications", label: "My Applications", icon: FileText }, // ✅ ADDED
-      { href: "/dashboard/donations", label: "My Donations", icon: Heart },
-      { href: "/dashboard/impact", label: "My Impact", icon: TrendingUp },
-      { href: "/dashboard/saved", label: "Saved Items", icon: Bookmark },
-    ],
-       APPLICANT: [
+       MEMBER: [
       { href: "/dashboard/applications", label: "My Applications", icon: FileText },
       { href: "/dashboard/donations", label: "My Donations", icon: Heart },
-      { href: "/dashboard/impact", label: "My Impact", icon: TrendingUp }, // ✅ ADDED
+      { href: "/dashboard/impact", label: "My Impact", icon: TrendingUp },
+      { href: "/dashboard/benefits", label: "My Benefits", icon: Gift }, // ✅ ADDED
+      { href: "/dashboard/saved", label: "Saved Items", icon: Bookmark },
+    ],
+    APPLICANT: [
+      { href: "/dashboard/applications", label: "My Applications", icon: FileText },
+      { href: "/dashboard/donations", label: "My Donations", icon: Heart },
+      { href: "/dashboard/impact", label: "My Impact", icon: TrendingUp },
+      { href: "/dashboard/benefits", label: "My Benefits", icon: Gift }, // ✅ ADDED
       { href: "/dashboard/patient", label: "Patient Assistance", icon: Stethoscope },
     ],
     PROVIDER: [
