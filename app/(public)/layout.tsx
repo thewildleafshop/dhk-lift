@@ -28,7 +28,7 @@ export default function PublicLayout({
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-8 text-ink font-medium text-sm">
+          <nav className="hidden lg:flex items-center gap-6 xl:gap-8 text-ink font-medium text-sm">
             <Link href="/assistance" className="nav-link hover:text-navy">Assistance</Link>
             <Link href="/equipment" className="nav-link hover:text-navy">Equipment</Link>
             <Link href="/healthcare/funds" className="nav-link hover:text-navy">Healthcare</Link>
@@ -37,6 +37,8 @@ export default function PublicLayout({
             <Link href="/partnerships" className="nav-link hover:text-navy">Partnerships</Link>
             <Link href="/projects" className="nav-link hover:text-navy">Projects</Link>
             <Link href="/stories" className="nav-link hover:text-navy">Stories</Link>
+            <Link href="/impact" className="nav-link hover:text-navy">Impact</Link>
+            <Link href="/transparency" className="nav-link hover:text-navy">Transparency</Link>
           </nav>
 
           {/* Right Side: Search, Login, Donate */}
@@ -154,6 +156,20 @@ export default function PublicLayout({
                 className="px-4 py-3.5 text-ink font-medium rounded-input hover:bg-navy/5 hover:text-navy transition-all"
               >
                 Stories
+              </Link>
+              <Link
+                href="/impact"
+                onClick={() => setIsMenuOpen(false)}
+                className="px-4 py-3.5 text-ink font-medium rounded-input hover:bg-navy/5 hover:text-navy transition-all"
+              >
+                Impact
+              </Link>
+              <Link
+                href="/transparency"
+                onClick={() => setIsMenuOpen(false)}
+                className="px-4 py-3.5 text-ink font-medium rounded-input hover:bg-navy/5 hover:text-navy transition-all"
+              >
+                Transparency
               </Link>
 
               <div className="border-t border-gray-100 my-3"></div>
