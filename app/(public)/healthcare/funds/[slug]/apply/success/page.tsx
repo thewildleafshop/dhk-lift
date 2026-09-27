@@ -2,24 +2,30 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   CheckCircle,
-  Stethoscope,
   Clock,
   Mail,
   ChevronRight,
   Shield,
-  Home,
   FileText,
-  Heart,
 } from "lucide-react";
 
 export default function FundApplicationSuccessPage() {
+  const searchParams = useSearchParams();
   const [referenceNumber, setReferenceNumber] = useState<string>("");
 
   useEffect(() => {
-    setReferenceNumber(`HLT-${Math.floor(10000000 + Math.random() * 90000000)}`);
-  }, []);
+    // URL se "ref" parameter lein (jo API response se aata hai)
+    const ref = searchParams.get("ref");
+    if (ref) {
+      setReferenceNumber(ref);
+    } else {
+      // Agar ref nahi mila toh fallback
+      setReferenceNumber(`HLT-${Math.floor(10000000 + Math.random() * 90000000)}`);
+    }
+  }, [searchParams]);
 
   return (
     <main className="min-h-screen bg-cloud flex items-center justify-center px-6 py-16">

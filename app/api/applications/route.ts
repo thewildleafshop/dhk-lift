@@ -56,3 +56,44 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
+
+// POST: Nayi application submit karein
+export async function POST(request: Request) {
+  try {
+    const session = await auth();
+
+    if (!session || !session.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { programId, amountRequested, data } = body;
+
+    if (!data) {
+      return NextResponse.json({ error: "Application data is required" }, { status: 400 });
+    }
+
+    const application = await prisma.application.create({
+      data: {
+        userId: session.user.id,
+        programId: programId || null,
+        status: "SUBMITTED",
+        amountRequested: amountRequested ? parseFloat(amountRequested) : null,
+        data: data,
+        submittedAt: new Date(),
+      },
+    });
+
+    return NextResponse.json(
+      {
+        success: true,
+        id: application.id,
+        confirmationNo: application.confirmationNo,
+      },
+      { status: 201 }
+    );
+  } catch (error) {
+    console.error("Error creating application:", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}

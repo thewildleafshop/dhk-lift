@@ -56,9 +56,10 @@ async function main() {
     }
   }
 
-  // ============ PARTNER PROFILE ============
-  console.log("\n🤝 Creating Partner Profile...\n");
+  // ============ PARTNER PROFILES ============
+  console.log("\n🤝 Creating Partner Profiles...\n");
 
+  // Main Partner (already has a user)
   const partner = await prisma.partner.upsert({
     where: { userId: partnerUserId },
     update: {},
@@ -75,6 +76,47 @@ async function main() {
   });
 
   console.log(`✅ Partner: ${partner.orgName} (${partner.status})`);
+
+  // Create additional partner users for demo
+  const additionalPartnerUsers = [
+    { email: "edhi@dhklift.org", name: "Edhi Foundation", orgName: "Edhi Foundation", orgType: "NGO", country: "Pakistan", website: "https://edhi.org", mission: "Providing emergency medical services, shelter, and food to those in need across Pakistan.", status: "TRUSTED" as const },
+    { email: "sindh-edu@dhklift.org", name: "Sindh Education Trust", orgName: "Sindh Education Trust", orgType: "NGO", country: "Pakistan", website: "https://sindheducation.org", mission: "Improving access to quality education for underprivileged children in Sindh.", status: "APPLICANT" as const },
+    { email: "suspended-partner@dhklift.org", name: "Suspended Org", orgName: "Global Relief Org", orgType: "NGO", country: "Pakistan", website: "https://globalrelief.org", mission: "International relief organization.", status: "SUSPENDED" as const },
+  ];
+
+  for (const p of additionalPartnerUsers) {
+    const hashedPassword = await bcrypt.hash("Partner@123", 10);
+    
+    const pUser = await prisma.user.upsert({
+      where: { email: p.email },
+      update: {},
+      create: {
+        name: p.name,
+        email: p.email,
+        password: hashedPassword,
+        role: "PARTNER",
+        status: "ACTIVE",
+        emailVerified: new Date(),
+      },
+    });
+
+    await prisma.partner.upsert({
+      where: { userId: pUser.id },
+      update: {},
+      create: {
+        userId: pUser.id,
+        orgName: p.orgName,
+        orgType: p.orgType,
+        country: p.country,
+        website: p.website,
+        mission: p.mission,
+        status: p.status,
+             verifiedAt: p.status === "TRUSTED" ? new Date() : null,
+      },
+    });
+
+    console.log(`   ✅ Partner: ${p.orgName} (${p.status})`);
+  }
 
   // ============ PROGRAMS ============
   console.log("\n🎯 Creating Programs...\n");
@@ -346,7 +388,6 @@ async function main() {
   const donorUser2 = await prisma.user.findUnique({ where: { email: "applicant@dhklift.org" } });
 
   if (donorUser) {
-    // Find programs and projects for allocations
     const liftHealthProgram = await prisma.program.findUnique({ where: { slug: "lift-health" } });
     const foodSecurityProgram = await prisma.program.findUnique({ where: { slug: "food-security" } });
     const cleanWaterProject = await prisma.project.findUnique({ where: { slug: "clean-water-rural-sindh" } });
@@ -401,7 +442,6 @@ async function main() {
       },
     ];
 
-    // Delete existing donations to avoid duplicates
     await prisma.donationAllocation.deleteMany({});
     await prisma.donation.deleteMany({});
     console.log("   🧹 Cleaned old donations\n");
@@ -434,7 +474,6 @@ async function main() {
       console.log(`   💰 Donation: $${donation.totalAmount} (${donation.status}) - ${donation.allocations.length} allocation(s)`);
     }
 
-    // Update member's total donated
     const totalDonated = donationsData
       .filter((d) => d.userId === donorUser.id && d.status === "COMPLETED")
       .reduce((sum, d) => sum + d.totalAmount, 0);
@@ -449,13 +488,10 @@ async function main() {
   } else {
     console.log(`   ⚠️ Member user not found, skipping donations`);
   }
+
   // ============ MEMBERSHIP TIERS INFO ============
   console.log("\n💎 Membership Tiers Info...\n");
 
-  // Note: Membership tiers Bronze/Silver/Gold/Platinum are defined in the enum
-  // We don't need a separate table for tiers, just the Membership records per user.
-  
-  // Update member's tier based on total donated
   if (donorUser) {
     const membership = await prisma.membership.findUnique({
       where: { userId: donorUser.id },
@@ -478,7 +514,6 @@ async function main() {
     }
   }
 
-  // Also create membership for applicant user if not exists
   if (donorUser2) {
     await prisma.membership.upsert({
       where: { userId: donorUser2.id },
@@ -491,6 +526,44 @@ async function main() {
     });
     console.log(`   💎 Applicant Membership: BRONZE`);
   }
+  // ============ DISEASE FUNDS (as Programs with category "Disease Fund") ============
+  console.log("\n🏥 Creating Disease Funds...\n");
+
+   const diseaseFundsData = [
+    { name: "Cancer Care Fund", slug: "cancer-care-fund", description: "Support for cancer patients covering treatment, medication, and diagnostic expenses.", category: "Disease Fund", maxAmount: 450000, geography: "Global", data: { available: 450000, funded: 180, applied: 245, utilization: 27 } },
+    { name: "Heart Disease Fund", slug: "heart-disease-fund", description: "Assistance for heart surgeries, cardiac care, and cardiovascular treatments.", category: "Disease Fund", maxAmount: 280000, geography: "Global", data: { available: 280000, funded: 125, applied: 180, utilization: 21 } },
+    { name: "Kidney Disease Fund", slug: "kidney-disease-fund", description: "Dialysis support, kidney transplant assistance, and renal care for patients.", category: "Disease Fund", maxAmount: 150000, geography: "Global", data: { available: 150000, funded: 68, applied: 95, utilization: 23 } },
+    { name: "Diabetes Care Fund", slug: "diabetes-care-fund", description: "Insulin support, diabetes management, and complication care for patients.", category: "Disease Fund", maxAmount: 95000, geography: "Global", data: { available: 95000, funded: 88, applied: 120, utilization: 35 } },
+    { name: "Rare Disease Fund", slug: "rare-disease-fund", description: "Support for patients with rare and orphan diseases requiring specialized treatment.", category: "Disease Fund", maxAmount: 25000, geography: "Global", data: { available: 25000, funded: 22, applied: 35, utilization: 15 } },
+    { name: "Children Health Fund", slug: "children-health-fund", description: "Healthcare support for children with critical illnesses and congenital conditions.", category: "Disease Fund", maxAmount: 180000, geography: "Global", data: { available: 180000, funded: 102, applied: 145, utilization: 40 } },
+    { name: "Thalassemia Fund", slug: "thalassemia-fund", description: "Lifelong support for thalassemia patients requiring regular blood transfusions.", category: "Disease Fund", maxAmount: 80000, geography: "Global", data: { available: 80000, funded: 45, applied: 60, utilization: 25 } },
+    { name: "Mental Health Fund", slug: "mental-health-fund", description: "Counseling, therapy, and psychiatric support for mental health conditions.", category: "Disease Fund", maxAmount: 40000, geography: "Global", data: { available: 40000, funded: 30, applied: 55, utilization: 18 } },
+    { name: "Maternal Health Fund", slug: "maternal-health-fund", description: "Prenatal, delivery, and postnatal care for mothers and newborns.", category: "Disease Fund", maxAmount: 60000, geography: "Global", data: { available: 60000, funded: 52, applied: 78, utilization: 32 } },
+  ];
+
+  for (const fund of diseaseFundsData) {
+    await prisma.program.upsert({
+      where: { slug: fund.slug },
+      update: {
+        name: fund.name,
+        description: fund.description,
+        maxAmount: fund.maxAmount,
+      },
+      create: fund,
+    });
+    console.log(`   🏥 ${fund.name}`);
+  }
+  console.log(`   ✅ ${diseaseFundsData.length} disease funds created`);
+
+  for (const fund of diseaseFundsData) {
+    await prisma.program.upsert({
+      where: { slug: fund.slug },
+      update: {},
+      create: fund,
+    });
+    console.log(`   🏥 ${fund.name}`);
+  }
+  console.log(`   ✅ ${diseaseFundsData.length} disease funds created`);
   console.log("\n🎉 Seed complete!\n");
   console.log("========================================");
   console.log("LOGIN CREDENTIALS:");

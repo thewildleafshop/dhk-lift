@@ -1,5 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
 import {
   ChevronLeft,
   ChevronRight,
@@ -10,235 +14,208 @@ import {
   Shield,
   Baby,
   Brain,
-  Bone,
-  Eye,
-  CheckCircle,
+  Accessibility,
   AlertCircle,
+  CheckCircle,
   Clock,
   DollarSign,
-  Users,
   FileText,
   Stethoscope,
   Building2,
   MapPin,
-  Calendar,
   TrendingUp,
   Lock,
+  Loader2,
 } from "lucide-react";
 
-// ============ FUNDS DATA ============
-const fundsData: Record<string, {
-  slug: string;
-  name: string;
+// ============ FUND DETAILS DATA (Hardcoded - Specific Content) ============
+const fundDetailsData: Record<string, {
   disease: string;
   icon: any;
   color: string;
   bgColor: string;
-  description: string;
   longDescription: string;
-  status: "Active" | "Paused";
+  eligibility: string[];
+  coveredExpenses: string[];
+  requiredDocs: string[];
+  processingTime: string;
+  availableRegions: string[];
   balance: number;
-  committed: number;
   totalRaised: number;
   applications: number;
   funded: number;
   maxAssistance: number;
-  eligibility: string[];
-  coveredExpenses: string[];
-  requiredDocs: string[];
-  geographicScope: string;
-  availableRegions: string[];
-  processingTime: string;
+  status: "Active" | "Paused";
 }> = {
   "cancer-care-fund": {
-    slug: "cancer-care-fund",
-    name: "Cancer Care Fund",
     disease: "Cancer",
     icon: HeartPulse,
     color: "text-purple",
     bgColor: "bg-purple/10",
-    description: "Support for cancer patients covering treatment, medication, and diagnostic expenses.",
     longDescription: "The Cancer Care Fund provides financial assistance to cancer patients who cannot afford the cost of treatment. We cover chemotherapy, radiation therapy, surgeries, medications, and diagnostic tests. All funds are paid directly to verified hospitals and cancer treatment centers.",
-    status: "Active",
-    balance: 450000,
-    committed: 320000,
-    totalRaised: 1200000,
-    applications: 245,
-    funded: 180,
-    maxAssistance: 10000,
-    eligibility: [
-      "Diagnosed with any type of cancer",
-      "Unable to afford treatment costs",
-      "Resident of supported regions",
-      "Income below threshold (case-by-case)",
-      "Medical documentation required",
-    ],
-    coveredExpenses: [
-      "Chemotherapy sessions",
-      "Radiation therapy",
-      "Cancer surgeries",
-      "Diagnostic tests (biopsy, CT, MRI)",
-      "Medications and supportive care",
-    ],
-    requiredDocs: [
-      "Medical diagnosis report",
-      "Oncologist's treatment plan",
-      "Hospital cost estimate",
-      "ID document (CNIC/Passport)",
-      "Income proof or financial statement",
-    ],
-    geographicScope: "Global",
-    availableRegions: ["Pakistan", "Middle East", "South Asia"],
+    eligibility: ["Diagnosed with any type of cancer", "Unable to afford treatment costs", "Resident of supported regions", "Income below threshold (case-by-case)", "Medical documentation required"],
+    coveredExpenses: ["Chemotherapy sessions", "Radiation therapy", "Cancer surgeries", "Diagnostic tests (biopsy, CT, MRI)", "Medications and supportive care"],
+    requiredDocs: ["Medical diagnosis report", "Oncologist's treatment plan", "Hospital cost estimate", "ID document (CNIC/Passport)", "Income proof or financial statement"],
     processingTime: "7-10 business days",
+    availableRegions: ["Pakistan", "Middle East", "South Asia"],
+    balance: 450000, totalRaised: 1200000, applications: 245, funded: 180, maxAssistance: 10000, status: "Active",
   },
   "heart-disease-fund": {
-    slug: "heart-disease-fund",
-    name: "Heart Disease Fund",
     disease: "Cardiovascular",
     icon: Heart,
     color: "text-error",
     bgColor: "bg-error/10",
-    description: "Assistance for heart surgeries, cardiac care, and cardiovascular treatments.",
     longDescription: "The Heart Disease Fund supports patients requiring cardiac surgeries, heart transplants, pacemaker implants, and ongoing cardiovascular care. We work with leading cardiac hospitals to provide world-class treatment regardless of the patient's financial situation.",
-    status: "Active",
-    balance: 280000,
-    committed: 180000,
-    totalRaised: 850000,
-    applications: 180,
-    funded: 125,
-    maxAssistance: 15000,
-    eligibility: [
-      "Diagnosed with heart disease or condition",
-      "Requires surgical or medical intervention",
-      "Unable to afford treatment costs",
-      "Resident of supported regions",
-      "Cardiologist's recommendation required",
-    ],
-    coveredExpenses: [
-      "Open heart surgeries",
-      "Angioplasty and stenting",
-      "Pacemaker implantation",
-      "Heart valve replacements",
-      "Cardiac medications",
-    ],
-    requiredDocs: [
-      "Cardiology diagnosis report",
-      "Recommended treatment plan",
-      "Hospital estimate for surgery",
-      "ID document",
-      "Income proof",
-    ],
-    geographicScope: "Global",
-    availableRegions: ["Pakistan", "Middle East", "South Asia"],
+    eligibility: ["Diagnosed with heart disease or condition", "Requires surgical or medical intervention", "Unable to afford treatment costs", "Resident of supported regions", "Cardiologist's recommendation required"],
+    coveredExpenses: ["Open heart surgeries", "Angioplasty and stenting", "Pacemaker implantation", "Heart valve replacements", "Cardiac medications"],
+    requiredDocs: ["Cardiology diagnosis report", "Recommended treatment plan", "Hospital estimate for surgery", "ID document", "Income proof"],
     processingTime: "5-7 business days",
+    availableRegions: ["Pakistan", "Middle East", "South Asia"],
+    balance: 280000, totalRaised: 850000, applications: 180, funded: 125, maxAssistance: 15000, status: "Active",
   },
   "kidney-disease-fund": {
-    slug: "kidney-disease-fund",
-    name: "Kidney Disease Fund",
     disease: "Renal",
     icon: Droplet,
     color: "text-info",
     bgColor: "bg-info/10",
-    description: "Dialysis support, kidney transplant assistance, and renal care for patients.",
     longDescription: "The Kidney Disease Fund provides assistance for dialysis treatments, kidney transplants, and related renal care. We understand that kidney disease is a long-term condition requiring consistent support, and we're here to help patients throughout their journey.",
-    status: "Active",
-    balance: 150000,
-    committed: 95000,
-    totalRaised: 420000,
-    applications: 95,
-    funded: 68,
-    maxAssistance: 12000,
-    eligibility: [
-      "Diagnosed with chronic kidney disease",
-      "Requires dialysis or transplant",
-      "Unable to afford treatment costs",
-      "Resident of supported regions",
-      "Nephrologist's recommendation",
-    ],
-    coveredExpenses: [
-      "Dialysis sessions",
-      "Kidney transplant surgery",
-      "Immunosuppressant medications",
-      "Pre and post-transplant care",
-      "Related diagnostic tests",
-    ],
-    requiredDocs: [
-      "Nephrology diagnosis report",
-      "Dialysis or transplant recommendation",
-      "Hospital cost estimate",
-      "ID document",
-      "Income proof",
-    ],
-    geographicScope: "Global",
-    availableRegions: ["Pakistan", "Middle East"],
+    eligibility: ["Diagnosed with chronic kidney disease", "Requires dialysis or transplant", "Unable to afford treatment costs", "Resident of supported regions", "Nephrologist's recommendation"],
+    coveredExpenses: ["Dialysis sessions", "Kidney transplant surgery", "Immunosuppressant medications", "Pre and post-transplant care", "Related diagnostic tests"],
+    requiredDocs: ["Nephrology diagnosis report", "Dialysis or transplant recommendation", "Hospital cost estimate", "ID document", "Income proof"],
     processingTime: "7-10 business days",
+    availableRegions: ["Pakistan", "Middle East"],
+    balance: 150000, totalRaised: 420000, applications: 95, funded: 68, maxAssistance: 12000, status: "Active",
   },
   "diabetes-care-fund": {
-    slug: "diabetes-care-fund",
-    name: "Diabetes Care Fund",
     disease: "Diabetes",
     icon: Activity,
     color: "text-teal",
     bgColor: "bg-teal/10",
-    description: "Insulin support, diabetes management, and complication care for patients.",
     longDescription: "The Diabetes Care Fund helps diabetes patients manage their condition with insulin, monitoring equipment, and treatment for diabetes-related complications. We also support education and lifestyle management programs.",
-    status: "Active",
-    balance: 95000,
-    committed: 48000,
-    totalRaised: 280000,
-    applications: 120,
-    funded: 88,
-    maxAssistance: 5000,
-    eligibility: [
-      "Diagnosed with Type 1 or Type 2 diabetes",
-      "Unable to afford insulin or monitoring supplies",
-      "Requires ongoing management support",
-      "Resident of supported regions",
-    ],
-    coveredExpenses: [
-      "Insulin and diabetes medications",
-      "Glucose monitoring devices",
-      "Test strips and supplies",
-      "Complication treatments",
-      "Diabetes education programs",
-    ],
-    requiredDocs: [
-      "Diabetes diagnosis report",
-      "Prescription for insulin/medications",
-      "ID document",
-      "Income proof",
-    ],
-    geographicScope: "Global",
-    availableRegions: ["Pakistan", "Middle East", "South Asia"],
+    eligibility: ["Diagnosed with Type 1 or Type 2 diabetes", "Unable to afford insulin or monitoring supplies", "Requires ongoing management support", "Resident of supported regions"],
+    coveredExpenses: ["Insulin and diabetes medications", "Glucose monitoring devices", "Test strips and supplies", "Complication treatments", "Diabetes education programs"],
+    requiredDocs: ["Diabetes diagnosis report", "Prescription for insulin/medications", "ID document", "Income proof"],
     processingTime: "5-7 business days",
+    availableRegions: ["Pakistan", "Middle East", "South Asia"],
+    balance: 95000, totalRaised: 280000, applications: 120, funded: 88, maxAssistance: 5000, status: "Active",
+  },
+  "rare-disease-fund": {
+    disease: "Multiple Conditions",
+    icon: Shield,
+    color: "text-purple",
+    bgColor: "bg-purple/10",
+    longDescription: "The Rare Disease Fund supports patients with rare and orphan diseases requiring specialized treatment. These conditions often require expensive medications and expert care that is not readily available.",
+    eligibility: ["Diagnosed with a rare or orphan disease", "Requires specialized treatment", "Unable to afford treatment costs", "Medical documentation required"],
+    coveredExpenses: ["Specialized medications", "Expert consultations", "Diagnostic tests", "Treatment procedures", "Supportive care"],
+    requiredDocs: ["Specialist diagnosis report", "Treatment plan", "Hospital cost estimate", "ID document", "Income proof"],
+    processingTime: "10-15 business days",
+    availableRegions: ["Pakistan", "Middle East"],
+    balance: 25000, totalRaised: 100000, applications: 35, funded: 22, maxAssistance: 20000, status: "Paused",
+  },
+  "children-health-fund": {
+    disease: "Pediatric",
+    icon: Baby,
+    color: "text-teal",
+    bgColor: "bg-teal/10",
+    longDescription: "The Children Health Fund provides healthcare support for children with critical illnesses and congenital conditions. We believe every child deserves access to quality healthcare regardless of their family's financial situation.",
+    eligibility: ["Child under 18 years of age", "Diagnosed with critical illness or congenital condition", "Unable to afford treatment costs", "Parent/guardian consent required"],
+    coveredExpenses: ["Pediatric surgeries", "Neonatal care", "Congenital condition treatments", "Vaccinations and preventive care", "Specialized pediatric consultations"],
+    requiredDocs: ["Child's medical diagnosis report", "Birth certificate", "Parent/guardian ID", "Hospital cost estimate", "Income proof"],
+    processingTime: "5-7 business days",
+    availableRegions: ["Pakistan", "Middle East", "South Asia"],
+    balance: 180000, totalRaised: 500000, applications: 145, funded: 102, maxAssistance: 12000, status: "Active",
+  },
+  "thalassemia-fund": {
+    disease: "Blood Disorder",
+    icon: Droplet,
+    color: "text-error",
+    bgColor: "bg-error/10",
+    longDescription: "The Thalassemia Fund provides lifelong support for thalassemia patients requiring regular blood transfusions and iron chelation therapy. We also support bone marrow transplant procedures where applicable.",
+    eligibility: ["Diagnosed with thalassemia", "Requires regular blood transfusions", "Unable to afford treatment costs", "Medical documentation required"],
+    coveredExpenses: ["Blood transfusions", "Iron chelation therapy", "Bone marrow transplant", "Related diagnostic tests", "Supportive medications"],
+    requiredDocs: ["Thalassemia diagnosis report", "Treatment plan", "Hospital cost estimate", "ID document", "Income proof"],
+    processingTime: "7-10 business days",
+    availableRegions: ["Pakistan", "Middle East", "South Asia"],
+    balance: 80000, totalRaised: 250000, applications: 60, funded: 45, maxAssistance: 8000, status: "Active",
+  },
+  "mental-health-fund": {
+    disease: "Mental Health",
+    icon: Brain,
+    color: "text-purple",
+    bgColor: "bg-purple/10",
+    longDescription: "The Mental Health Fund provides counseling, therapy, and psychiatric support for mental health conditions. We believe mental health is just as important as physical health and strive to make treatment accessible to all.",
+    eligibility: ["Diagnosed with a mental health condition", "Requires therapy or psychiatric care", "Unable to afford treatment costs", "Confidentiality guaranteed"],
+    coveredExpenses: ["Therapy sessions", "Psychiatric consultations", "Medications", "Counseling programs", "Rehabilitation support"],
+    requiredDocs: ["Psychiatric/psychological assessment", "Treatment recommendation", "ID document", "Income proof"],
+    processingTime: "5-7 business days",
+    availableRegions: ["Pakistan", "Middle East"],
+    balance: 40000, totalRaised: 120000, applications: 55, funded: 30, maxAssistance: 4000, status: "Active",
+  },
+  "maternal-health-fund": {
+    disease: "Maternal Health",
+    icon: Baby,
+    color: "text-teal",
+    bgColor: "bg-teal/10",
+    longDescription: "The Maternal Health Fund provides prenatal, delivery, and postnatal care for mothers and newborns. We ensure that no mother has to choose between her health and her financial stability.",
+    eligibility: ["Pregnant woman or new mother", "Unable to afford maternal healthcare", "Resident of supported regions", "Antenatal documentation required"],
+    coveredExpenses: ["Prenatal checkups", "Delivery procedures (normal/C-section)", "Postnatal care", "Newborn care", "Medications and supplements"],
+    requiredDocs: ["Pregnancy confirmation", "Antenatal care records", "Hospital cost estimate", "ID document", "Income proof"],
+    processingTime: "3-5 business days",
+    availableRegions: ["Pakistan", "Middle East", "South Asia"],
+    balance: 60000, totalRaised: 180000, applications: 78, funded: 52, maxAssistance: 6000, status: "Active",
   },
 };
 
-// ============ GENERATE STATIC PARAMS ============
-export function generateStaticParams() {
-  return Object.keys(fundsData).map((slug) => ({ slug }));
-}
-
 // ============ MAIN COMPONENT ============
-export default async function DiseaseFundDetailPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
-  const { slug } = await params;
-  const fund = fundsData[slug];
+export default function DiseaseFundDetailPage() {
+  const params = useParams();
+  const slug = params.slug as string;
+
+  const [fund, setFund] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchFund() {
+      try {
+        const res = await fetch(`/api/disease-funds/${slug}`);
+        if (res.ok) {
+          const data = await res.json();
+          // Merge API data (name, description, maxAmount) with static details
+          const details = fundDetailsData[slug];
+          if (details) {
+            setFund({ ...data, ...details });
+          } else {
+            setFund({ ...data, disease: "General", icon: Stethoscope, color: "text-navy", bgColor: "bg-navy/10", longDescription: data.description, eligibility: [], coveredExpenses: [], requiredDocs: [], processingTime: "7-10 business days", availableRegions: ["Global"], balance: 0, totalRaised: 0, applications: 0, funded: 0, maxAssistance: data.maxAmount || 5000, status: "Active" });
+          }
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    if (slug) fetchFund();
+  }, [slug]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-10 h-10 text-navy animate-spin" />
+      </div>
+    );
+  }
 
   if (!fund) {
     notFound();
   }
 
   const Icon = fund.icon;
-  const utilization = (fund.committed / fund.totalRaised) * 100;
+  const utilization = fund.totalRaised > 0 ? (fund.balance / fund.totalRaised) * 100 : 0;
 
   return (
     <main className="min-h-screen bg-cloud">
 
-      {/* ================= HERO SECTION ================= */}
+      {/* HERO SECTION */}
       <section className="relative bg-navy text-white overflow-hidden">
         <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-gold/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
         <div className="max-w-container mx-auto px-6 py-12 md:py-16 relative z-10">
@@ -329,7 +306,6 @@ export default async function DiseaseFundDetailPage({
                 </div>
               </div>
 
-              {/* Info Row */}
               <div className="bg-cloud rounded-input p-4 mb-6 space-y-3">
                 <div className="flex items-center gap-3 text-sm">
                   <Clock className="w-4 h-4 text-navy shrink-0" />
@@ -354,7 +330,6 @@ export default async function DiseaseFundDetailPage({
                 </div>
               </div>
 
-              {/* Apply CTA */}
               {fund.status === "Active" ? (
                 <>
                   <Link
@@ -377,7 +352,6 @@ export default async function DiseaseFundDetailPage({
                 </div>
               )}
 
-              {/* Donate Option */}
               <Link
                 href={`/giving?fund=${fund.slug}`}
                 className="btn-lift w-full mt-3 border-2 border-navy/20 text-navy font-semibold px-6 py-3.5 rounded-input hover:bg-navy/5 transition-colors flex items-center justify-center gap-2 text-sm"
@@ -390,13 +364,11 @@ export default async function DiseaseFundDetailPage({
         </div>
       </section>
 
-      {/* ================= MAIN CONTENT ================= */}
+      {/* MAIN CONTENT */}
       <section className="max-w-container mx-auto px-6 py-16 md:py-24">
         <div className="grid lg:grid-cols-3 gap-8">
           
-          {/* ================= LEFT: DETAILS ================= */}
           <div className="lg:col-span-2 space-y-6">
-            
             {/* Eligibility */}
             <div className="bg-white rounded-card p-6 md:p-8 shadow-sm border border-gray-100">
               <h2 className="font-display font-bold text-navy text-lg mb-6 flex items-center gap-2">
@@ -404,7 +376,7 @@ export default async function DiseaseFundDetailPage({
                 Eligibility Criteria
               </h2>
               <ul className="space-y-3">
-                {fund.eligibility.map((item, i) => (
+                {fund.eligibility.map((item: string, i: number) => (
                   <li key={i} className="flex items-start gap-3">
                     <CheckCircle className="w-5 h-5 text-teal mt-0.5 shrink-0" />
                     <span className="text-ink/80">{item}</span>
@@ -420,7 +392,7 @@ export default async function DiseaseFundDetailPage({
                 What's Covered
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {fund.coveredExpenses.map((item, i) => (
+                {fund.coveredExpenses.map((item: string, i: number) => (
                   <div key={i} className="flex items-start gap-3 p-4 bg-cloud rounded-input">
                     <CheckCircle className="w-5 h-5 text-success mt-0.5 shrink-0" />
                     <span className="text-ink/80 text-sm">{item}</span>
@@ -436,7 +408,7 @@ export default async function DiseaseFundDetailPage({
                 Required Documents
               </h2>
               <div className="space-y-3">
-                {fund.requiredDocs.map((item, i) => (
+                {fund.requiredDocs.map((item: string, i: number) => (
                   <div key={i} className="flex items-start gap-3 p-4 bg-warning/5 border border-warning/10 rounded-input">
                     <div className="bg-warning/20 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold text-warning shrink-0">
                       {i + 1}
@@ -448,10 +420,8 @@ export default async function DiseaseFundDetailPage({
             </div>
           </div>
 
-          {/* ================= RIGHT: SIDEBAR ================= */}
+          {/* RIGHT: SIDEBAR */}
           <div className="space-y-6">
-            
-            {/* Apply Steps */}
             <div className="bg-white rounded-card p-6 shadow-sm border border-gray-100">
               <h3 className="font-display font-bold text-navy text-base mb-4 flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-gold" />
@@ -477,14 +447,11 @@ export default async function DiseaseFundDetailPage({
               </div>
             </div>
 
-            {/* Trust Card */}
             <div className="bg-navy text-white rounded-card p-6 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-[150px] h-[150px] bg-gold/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"></div>
               <div className="relative z-10">
                 <Shield className="w-8 h-8 text-gold mb-3" />
-                <h3 className="font-display font-bold text-base">
-                  100% Confidential
-                </h3>
+                <h3 className="font-display font-bold text-base">100% Confidential</h3>
                 <p className="text-white/80 text-xs mt-2 leading-relaxed">
                   Your medical information and application details are strictly confidential. 
                   Only authorized team members can access your data.
@@ -492,14 +459,11 @@ export default async function DiseaseFundDetailPage({
               </div>
             </div>
 
-            {/* Contact */}
             <div className="bg-white rounded-card p-6 shadow-sm border border-gray-100 text-center">
               <div className="bg-teal/10 rounded-full p-3 w-fit mx-auto mb-3">
                 <Stethoscope className="w-6 h-6 text-teal" />
               </div>
-              <h3 className="font-display font-bold text-navy text-base mb-2">
-                Need Help?
-              </h3>
+              <h3 className="font-display font-bold text-navy text-base mb-2">Need Help?</h3>
               <p className="text-ink/60 text-xs mb-4">
                 Contact our healthcare team for assistance.
               </p>
@@ -515,7 +479,7 @@ export default async function DiseaseFundDetailPage({
         </div>
       </section>
 
-      {/* ================= BACK LINK ================= */}
+      {/* BACK LINK */}
       <section className="max-w-container mx-auto px-6 pb-16 text-center">
         <Link
           href="/healthcare/funds"
@@ -526,7 +490,7 @@ export default async function DiseaseFundDetailPage({
         </Link>
       </section>
 
-      {/* ================= CTA SECTION ================= */}
+      {/* CTA SECTION */}
       <section className="bg-purple text-white">
         <div className="max-w-container mx-auto px-6 py-16 md:py-20 text-center">
           <h2 className="font-display text-3xl md:text-4xl font-bold">
