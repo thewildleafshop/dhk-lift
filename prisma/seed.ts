@@ -59,7 +59,6 @@ async function main() {
   // ============ PARTNER PROFILES ============
   console.log("\n🤝 Creating Partner Profiles...\n");
 
-  // Main Partner (already has a user)
   const partner = await prisma.partner.upsert({
     where: { userId: partnerUserId },
     update: {},
@@ -77,7 +76,6 @@ async function main() {
 
   console.log(`✅ Partner: ${partner.orgName} (${partner.status})`);
 
-  // Create additional partner users for demo
   const additionalPartnerUsers = [
     { email: "edhi@dhklift.org", name: "Edhi Foundation", orgName: "Edhi Foundation", orgType: "NGO", country: "Pakistan", website: "https://edhi.org", mission: "Providing emergency medical services, shelter, and food to those in need across Pakistan.", status: "TRUSTED" as const },
     { email: "sindh-edu@dhklift.org", name: "Sindh Education Trust", orgName: "Sindh Education Trust", orgType: "NGO", country: "Pakistan", website: "https://sindheducation.org", mission: "Improving access to quality education for underprivileged children in Sindh.", status: "APPLICANT" as const },
@@ -86,7 +84,7 @@ async function main() {
 
   for (const p of additionalPartnerUsers) {
     const hashedPassword = await bcrypt.hash("Partner@123", 10);
-    
+
     const pUser = await prisma.user.upsert({
       where: { email: p.email },
       update: {},
@@ -111,7 +109,7 @@ async function main() {
         website: p.website,
         mission: p.mission,
         status: p.status,
-             verifiedAt: p.status === "TRUSTED" ? new Date() : null,
+        verifiedAt: p.status === "TRUSTED" ? new Date() : null,
       },
     });
 
@@ -500,7 +498,7 @@ async function main() {
     if (membership) {
       let newTier: "BRONZE" | "SILVER" | "GOLD" | "PLATINUM" = "BRONZE";
       const total = Number(membership.totalDonated);
-      
+
       if (total >= 10000) newTier = "PLATINUM";
       else if (total >= 5000) newTier = "GOLD";
       else if (total >= 1000) newTier = "SILVER";
@@ -526,19 +524,20 @@ async function main() {
     });
     console.log(`   💎 Applicant Membership: BRONZE`);
   }
+
   // ============ DISEASE FUNDS (as Programs with category "Disease Fund") ============
   console.log("\n🏥 Creating Disease Funds...\n");
 
-   const diseaseFundsData = [
-    { name: "Cancer Care Fund", slug: "cancer-care-fund", description: "Support for cancer patients covering treatment, medication, and diagnostic expenses.", category: "Disease Fund", maxAmount: 450000, geography: "Global", data: { available: 450000, funded: 180, applied: 245, utilization: 27 } },
-    { name: "Heart Disease Fund", slug: "heart-disease-fund", description: "Assistance for heart surgeries, cardiac care, and cardiovascular treatments.", category: "Disease Fund", maxAmount: 280000, geography: "Global", data: { available: 280000, funded: 125, applied: 180, utilization: 21 } },
-    { name: "Kidney Disease Fund", slug: "kidney-disease-fund", description: "Dialysis support, kidney transplant assistance, and renal care for patients.", category: "Disease Fund", maxAmount: 150000, geography: "Global", data: { available: 150000, funded: 68, applied: 95, utilization: 23 } },
-    { name: "Diabetes Care Fund", slug: "diabetes-care-fund", description: "Insulin support, diabetes management, and complication care for patients.", category: "Disease Fund", maxAmount: 95000, geography: "Global", data: { available: 95000, funded: 88, applied: 120, utilization: 35 } },
-    { name: "Rare Disease Fund", slug: "rare-disease-fund", description: "Support for patients with rare and orphan diseases requiring specialized treatment.", category: "Disease Fund", maxAmount: 25000, geography: "Global", data: { available: 25000, funded: 22, applied: 35, utilization: 15 } },
-    { name: "Children Health Fund", slug: "children-health-fund", description: "Healthcare support for children with critical illnesses and congenital conditions.", category: "Disease Fund", maxAmount: 180000, geography: "Global", data: { available: 180000, funded: 102, applied: 145, utilization: 40 } },
-    { name: "Thalassemia Fund", slug: "thalassemia-fund", description: "Lifelong support for thalassemia patients requiring regular blood transfusions.", category: "Disease Fund", maxAmount: 80000, geography: "Global", data: { available: 80000, funded: 45, applied: 60, utilization: 25 } },
-    { name: "Mental Health Fund", slug: "mental-health-fund", description: "Counseling, therapy, and psychiatric support for mental health conditions.", category: "Disease Fund", maxAmount: 40000, geography: "Global", data: { available: 40000, funded: 30, applied: 55, utilization: 18 } },
-    { name: "Maternal Health Fund", slug: "maternal-health-fund", description: "Prenatal, delivery, and postnatal care for mothers and newborns.", category: "Disease Fund", maxAmount: 60000, geography: "Global", data: { available: 60000, funded: 52, applied: 78, utilization: 32 } },
+  const diseaseFundsData = [
+    { name: "Cancer Care Fund", slug: "cancer-care-fund", description: "Support for cancer patients covering treatment, medication, and diagnostic expenses.", category: "Disease Fund", maxAmount: 450000, geography: "Global" },
+    { name: "Heart Disease Fund", slug: "heart-disease-fund", description: "Assistance for heart surgeries, cardiac care, and cardiovascular treatments.", category: "Disease Fund", maxAmount: 280000, geography: "Global" },
+    { name: "Kidney Disease Fund", slug: "kidney-disease-fund", description: "Dialysis support, kidney transplant assistance, and renal care for patients.", category: "Disease Fund", maxAmount: 150000, geography: "Global" },
+    { name: "Diabetes Care Fund", slug: "diabetes-care-fund", description: "Insulin support, diabetes management, and complication care for patients.", category: "Disease Fund", maxAmount: 95000, geography: "Global" },
+    { name: "Rare Disease Fund", slug: "rare-disease-fund", description: "Support for patients with rare and orphan diseases requiring specialized treatment.", category: "Disease Fund", maxAmount: 25000, geography: "Global" },
+    { name: "Children Health Fund", slug: "children-health-fund", description: "Healthcare support for children with critical illnesses and congenital conditions.", category: "Disease Fund", maxAmount: 180000, geography: "Global" },
+    { name: "Thalassemia Fund", slug: "thalassemia-fund", description: "Lifelong support for thalassemia patients requiring regular blood transfusions.", category: "Disease Fund", maxAmount: 80000, geography: "Global" },
+    { name: "Mental Health Fund", slug: "mental-health-fund", description: "Counseling, therapy, and psychiatric support for mental health conditions.", category: "Disease Fund", maxAmount: 40000, geography: "Global" },
+    { name: "Maternal Health Fund", slug: "maternal-health-fund", description: "Prenatal, delivery, and postnatal care for mothers and newborns.", category: "Disease Fund", maxAmount: 60000, geography: "Global" },
   ];
 
   for (const fund of diseaseFundsData) {
@@ -555,15 +554,6 @@ async function main() {
   }
   console.log(`   ✅ ${diseaseFundsData.length} disease funds created`);
 
-  for (const fund of diseaseFundsData) {
-    await prisma.program.upsert({
-      where: { slug: fund.slug },
-      update: {},
-      create: fund,
-    });
-    console.log(`   🏥 ${fund.name}`);
-  }
-  console.log(`   ✅ ${diseaseFundsData.length} disease funds created`);
   console.log("\n🎉 Seed complete!\n");
   console.log("========================================");
   console.log("LOGIN CREDENTIALS:");
