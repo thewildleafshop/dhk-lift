@@ -553,7 +553,117 @@ async function main() {
     console.log(`   🏥 ${fund.name}`);
   }
   console.log(`   ✅ ${diseaseFundsData.length} disease funds created`);
+  // ============ STORIES & TESTIMONIALS ============
+  console.log("\n📖 Creating Test Stories...\n");
 
+  const storyUser = await prisma.user.findUnique({ where: { email: "member@dhklift.org" } });
+  const storyUser2 = await prisma.user.findUnique({ where: { email: "applicant@dhklift.org" } });
+  const liftHealthProgramStory = await prisma.program.findUnique({ where: { slug: "lift-health" } });
+  const cleanWaterProjectStory = await prisma.project.findUnique({ where: { slug: "clean-water-rural-sindh" } });
+
+  if (storyUser && storyUser2) {
+    const storiesData = [
+      {
+        userId: storyUser.id,
+        title: "Clean Water Changed My Village",
+        slug: "clean-water-changed-my-village",
+        excerpt: "For the first time in 20 years, my children can drink water without fear of disease.",
+        content: "My name is Fatima and I live in a small village in rural Sindh. For the past 20 years, our only source of water was a contaminated well that caused frequent illnesses, especially among children. When DHK LIFT and Al-Khidmat Foundation installed a deep water well in our village, everything changed. My children no longer suffer from waterborne diseases, and I can finally focus on their education instead of worrying about their health. This project has given us a new lease on life.",
+        category: "Water & Sanitation",
+        status: "PUBLISHED" as const,
+        authorName: "Fatima Bibi",
+        isAnonymous: false,
+        imageUrl: "https://placehold.co/800x600/0B468F/FFFFFF?text=Clean+Water+Story",
+        programId: null,
+        projectId: cleanWaterProjectStory?.id || null,
+        submittedAt: new Date(),
+        approvedAt: new Date(),
+        publishedAt: new Date(),
+      },
+      {
+        userId: storyUser2.id,
+        title: "My Daughter Can Walk Again",
+        slug: "my-daughter-can-walk-again",
+        excerpt: "The wheelchair from LIFT Ability gave my daughter her independence back.",
+        content: "My daughter was diagnosed with a spinal cord injury two years ago, and we could not afford the motorized wheelchair she needed. I am a single mother with limited income, and I felt hopeless. DHK LIFT's LIFT Ability program provided us with a motorized wheelchair within weeks of applying. My daughter can now move around independently, attend school, and even play with her friends. This is not just a wheelchair - it is freedom, dignity, and hope for our family.",
+        category: "Disability Support",
+        status: "PUBLISHED" as const,
+        authorName: "Anonymous",
+        isAnonymous: true,
+        imageUrl: "https://placehold.co/800x600/7A2C91/FFFFFF?text=Wheelchair+Story",
+        programId: null,
+        projectId: null,
+        submittedAt: new Date(),
+        approvedAt: new Date(),
+        publishedAt: new Date(),
+      },
+      {
+        userId: storyUser.id,
+        title: "Cancer Treatment Saved My Husband",
+        slug: "cancer-treatment-saved-my-husband",
+        excerpt: "The Cancer Care Fund gave us a second chance when we had lost all hope.",
+        content: "When my husband was diagnosed with leukemia, our world fell apart. We had spent all our savings on his initial treatment, and we could not afford the ongoing chemotherapy. The Cancer Care Fund from DHK LIFT stepped in and covered his treatment costs directly. Today, my husband is in remission and back at work. We are forever grateful to the donors and the DHK LIFT team who stood by us during our darkest days.",
+        category: "Healthcare",
+        status: "APPROVED" as const,
+        authorName: "Ayesha Khan",
+        isAnonymous: false,
+        imageUrl: "https://placehold.co/800x600/12A8C0/FFFFFF?text=Cancer+Story",
+        programId: liftHealthProgramStory?.id || null,
+        projectId: null,
+        submittedAt: new Date(),
+        approvedAt: new Date(),
+        publishedAt: null,
+      },
+      {
+        userId: storyUser2.id,
+        title: "Education Changed My Children's Future",
+        slug: "education-changed-my-childrens-future",
+        excerpt: "The school renovation project gave my children a safe place to learn.",
+        content: "Our local government school was in terrible condition - broken windows, leaking roof, and no proper furniture. Many children, including my own, had stopped attending. When the School Renovation Project renovated the building, everything changed. My children are excited to go to school again, and their grades have improved dramatically. Thank you to all the donors who made this possible.",
+        category: "Education",
+        status: "PENDING" as const,
+        authorName: "Muhammad Ali",
+        isAnonymous: false,
+        imageUrl: "https://placehold.co/800x600/FFA20D/FFFFFF?text=Education+Story",
+        programId: null,
+        projectId: null,
+        submittedAt: new Date(),
+        approvedAt: null,
+        publishedAt: null,
+      },
+      {
+        userId: storyUser.id,
+        title: "Food Distribution Reached Our Village",
+        slug: "food-distribution-reached-our-village",
+        excerpt: "After the floods, the emergency food distribution saved our families.",
+        content: "The floods destroyed our crops and homes, leaving us with nothing. We were surviving on whatever we could find, and many families were starving. The Emergency Food Distribution program reached our village within days and provided us with food packages that lasted weeks. It gave us time to recover and rebuild. We cannot thank DHK LIFT enough for their quick response.",
+        category: "Food Security",
+        status: "PUBLISHED" as const,
+        authorName: "Bilal Ahmed",
+        isAnonymous: false,
+        imageUrl: "https://placehold.co/800x600/B7791F/FFFFFF?text=Food+Story",
+        programId: null,
+        projectId: null,
+        submittedAt: new Date(),
+        approvedAt: new Date(),
+        publishedAt: new Date(),
+      },
+    ];
+
+    // Clean old stories
+    await prisma.story.deleteMany({});
+    console.log("   🧹 Cleaned old stories\n");
+
+    for (const story of storiesData) {
+      await prisma.story.create({
+        data: story,
+      });
+      console.log(`   📖 Story: ${story.title} (${story.status})`);
+    }
+    console.log(`   ✅ ${storiesData.length} stories created`);
+  } else {
+    console.log(`   ⚠️ Story users not found, skipping stories`);
+  }
   console.log("\n🎉 Seed complete!\n");
   console.log("========================================");
   console.log("LOGIN CREDENTIALS:");
