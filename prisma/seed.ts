@@ -46,7 +46,7 @@ async function main() {
       await prisma.membership.upsert({
         where: { userId: user.id },
         update: {},
-        create: { userId: user.id, tier: "BRONZE", totalDonated: 150 },
+        create: { userId: user.id, tier: "BRONZE", totalDonated: 0 },
       });
       console.log(`   💎 Membership: BRONZE`);
     }
@@ -127,7 +127,6 @@ async function main() {
   await prisma.milestone.deleteMany({});
   console.log("   🧹 Cleaned old milestones & evidence\n");
 
-  // Project 1: Clean Water
   const waterProject = await prisma.project.findUnique({ where: { slug: "clean-water-rural-sindh" } });
   if (waterProject) {
     const milestonesData = [
@@ -189,7 +188,6 @@ async function main() {
     console.log(`   ✅ Clean Water: 5 milestones created`);
   }
 
-  // Project 2: Mobile Medical
   const medicalProject = await prisma.project.findUnique({ where: { slug: "mobile-medical-clinics" } });
   if (medicalProject) {
     const milestonesData = [
@@ -206,7 +204,6 @@ async function main() {
     console.log(`   ✅ Mobile Medical: 4 milestones created`);
   }
 
-  // Project 3: School Renovation
   const schoolProject = await prisma.project.findUnique({ where: { slug: "school-renovation-project" } });
   if (schoolProject) {
     const milestonesData = [
@@ -228,7 +225,6 @@ async function main() {
     console.log(`   ✅ School Renovation: 4 milestones created`);
   }
 
-  // Project 4: Emergency Food
   const foodProject = await prisma.project.findUnique({ where: { slug: "emergency-food-distribution" } });
   if (foodProject) {
     const milestonesData = [
@@ -341,6 +337,117 @@ async function main() {
     console.log(`   ✅ ${applicationsData.length} applications created`);
   } else {
     console.log(`   ⚠️ Applicant or Member user not found, skipping applications`);
+  }
+
+  // ============ DONATIONS ============
+  console.log("\n💝 Creating Test Donations...\n");
+
+  const donorUser = await prisma.user.findUnique({ where: { email: "member@dhklift.org" } });
+  const donorUser2 = await prisma.user.findUnique({ where: { email: "applicant@dhklift.org" } });
+
+  if (donorUser) {
+    // Find programs and projects for allocations
+    const liftHealthProgram = await prisma.program.findUnique({ where: { slug: "lift-health" } });
+    const foodSecurityProgram = await prisma.program.findUnique({ where: { slug: "food-security" } });
+    const cleanWaterProject = await prisma.project.findUnique({ where: { slug: "clean-water-rural-sindh" } });
+    const schoolProject2 = await prisma.project.findUnique({ where: { slug: "school-renovation-project" } });
+
+    const donationsData = [
+      {
+        userId: donorUser.id,
+        donorEmail: "member@dhklift.org",
+        donorName: "Test Member",
+        totalAmount: 150,
+        status: "COMPLETED" as const,
+        isRecurring: false,
+        allocations: [
+          { programId: liftHealthProgram?.id, amount: 100 },
+          { programId: foodSecurityProgram?.id, amount: 50 },
+        ],
+      },
+      {
+        userId: donorUser.id,
+        donorEmail: "member@dhklift.org",
+        donorName: "Test Member",
+        totalAmount: 75,
+        status: "COMPLETED" as const,
+        isRecurring: true,
+        allocations: [
+          { projectId: cleanWaterProject?.id, amount: 75 },
+        ],
+      },
+      {
+        userId: donorUser2?.id,
+        donorEmail: "applicant@dhklift.org",
+        donorName: "Test Applicant",
+        totalAmount: 200,
+        status: "COMPLETED" as const,
+        isRecurring: false,
+        allocations: [
+          { programId: liftHealthProgram?.id, amount: 100 },
+          { projectId: schoolProject2?.id, amount: 100 },
+        ],
+      },
+      {
+        userId: null,
+        donorEmail: "guest@example.com",
+        donorName: "Guest Donor",
+        totalAmount: 50,
+        status: "PENDING" as const,
+        isRecurring: false,
+        allocations: [
+          { programId: foodSecurityProgram?.id, amount: 50 },
+        ],
+      },
+    ];
+
+    // Delete existing donations to avoid duplicates
+    await prisma.donationAllocation.deleteMany({});
+    await prisma.donation.deleteMany({});
+    console.log("   🧹 Cleaned old donations\n");
+
+    for (const donation of donationsData) {
+      const createdDonation = await prisma.donation.create({
+        data: {
+          userId: donation.userId,
+          donorEmail: donation.donorEmail,
+          donorName: donation.donorName,
+          totalAmount: donation.totalAmount,
+          currency: "USD",
+          status: donation.status,
+          isRecurring: donation.isRecurring,
+          paymentIntent: `pi_test_${Math.random().toString(36).substring(7)}`,
+        },
+      });
+
+      for (const alloc of donation.allocations as any[]) {
+        await prisma.donationAllocation.create({
+          data: {
+            donationId: createdDonation.id,
+            programId: alloc.programId || null,
+            projectId: alloc.projectId || null,
+            amount: alloc.amount,
+          },
+        });
+      }
+
+      console.log(`   💰 Donation: $${donation.totalAmount} (${donation.status}) - ${donation.allocations.length} allocation(s)`);
+    }
+
+    // Update member's total donated
+    const totalDonated = donationsData
+      .filter((d) => d.userId === donorUser.id && d.status === "COMPLETED")
+      .reduce((sum, d) => sum + d.totalAmount, 0);
+
+    await prisma.membership.update({
+      where: { userId: donorUser.id },
+      data: { totalDonated: totalDonated },
+    });
+
+    console.log(`   ✅ ${donationsData.length} donations created`);
+    console.log(`   💎 Member total donated: $${totalDonated}`);
+  } else {
+    console.log(`   ⚠️ Member user not found, skipping donations`);
   }
 
   console.log("\n🎉 Seed complete!\n");

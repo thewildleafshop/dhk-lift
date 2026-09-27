@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState, useEffect } from "react";
 import {
   TrendingUp,
   Heart,
@@ -11,139 +12,207 @@ import {
   Utensils,
   BookOpen,
   Stethoscope,
-  Home,
   Gift,
   CheckCircle,
   Sparkles,
   Target,
   Globe,
+  Loader2,
 } from "lucide-react";
 
-// ============ DEMO DATA ============
-const impactStats = [
-  {
-    label: "Lifetime Giving",
-    value: "$150",
-    subtext: "Across 4 donations",
-    icon: DollarSign,
-    color: "text-gold",
-    bgColor: "bg-gold/10",
-  },
-  {
-    label: "Lives Impacted",
-    value: "45",
-    subtext: "Meals provided (est.)",
-    icon: Users,
-    color: "text-teal",
-    bgColor: "bg-teal/10",
-  },
-  {
-    label: "Causes Supported",
-    value: "4",
-    subtext: "Different programs",
-    icon: Heart,
-    color: "text-purple",
-    bgColor: "bg-purple/10",
-  },
-  {
-    label: "Member Since",
-    value: "2025",
-    subtext: "Bronze Tier",
-    icon: Award,
-    color: "text-navy",
-    bgColor: "bg-navy/10",
-  },
-];
+// ============ TYPES ============
+interface Allocation {
+  id: string;
+  amount: number;
+  program: { id: string; name: string; slug: string; category: string } | null;
+  project: { id: string; title: string; slug: string } | null;
+}
 
-const causesSupported = [
-  {
-    name: "Food Security",
-    icon: Utensils,
-    color: "text-gold",
-    bgColor: "bg-gold/10",
-    donated: 50,
-    impact: "10 meals provided to families in need",
-    progress: 33,
-  },
-  {
-    name: "Education Support",
-    icon: BookOpen,
-    color: "text-teal",
-    bgColor: "bg-teal/10",
-    donated: 30,
-    impact: "School supplies for 1 child",
-    progress: 20,
-  },
-  {
-    name: "Healthcare Access",
-    icon: Stethoscope,
-    color: "text-teal",
-    bgColor: "bg-teal/10",
-    donated: 20,
-    impact: "Basic medication for 1 patient",
-    progress: 13,
-  },
-  {
-    name: "Where Needed Most",
-    icon: Sparkles,
-    color: "text-gold",
-    bgColor: "bg-gold/10",
-    donated: 50,
-    impact: "Emergency relief support",
-    progress: 33,
-  },
-];
+interface Donation {
+  id: string;
+  donorEmail: string;
+  totalAmount: number;
+  currency: string;
+  status: string;
+  isRecurring: boolean;
+  createdAt: string;
+  allocations: Allocation[];
+}
 
-const recentImpact = [
-  {
-    id: 1,
-    title: "Meals Delivered to Families",
-    description: "Your donation to Food Security provided 10 nutritious meals to families in Karachi.",
-    date: "Apr 15, 2026",
-    icon: Utensils,
-    color: "text-gold",
-    bgColor: "bg-gold/10",
-    verified: true,
-  },
-  {
-    id: 2,
-    title: "School Supplies Distributed",
-    description: "Your donation to Education Support provided books and supplies for 1 child.",
-    date: "Apr 2, 2026",
-    icon: BookOpen,
-    color: "text-teal",
-    bgColor: "bg-teal/10",
-    verified: true,
-  },
-  {
-    id: 3,
-    title: "Medical Aid Provided",
-    description: "Your donation to Healthcare Access provided basic medication for 1 patient.",
-    date: "Mar 18, 2026",
-    icon: Stethoscope,
-    color: "text-teal",
-    bgColor: "bg-teal/10",
-    verified: true,
-  },
-];
+// ============ CAUSE ICONS ============
+const getCauseIcon = (name: string) => {
+  const map: Record<string, any> = {
+    "LIFT Health": { icon: Stethoscope, color: "text-teal", bgColor: "bg-teal/10" },
+    "LIFT Protect": { icon: Heart, color: "text-purple", bgColor: "bg-purple/10" },
+    "LIFT Ability": { icon: Users, color: "text-purple", bgColor: "bg-purple/10" },
+    "LIFT Community": { icon: BookOpen, color: "text-gold", bgColor: "bg-gold/10" },
+    "Children & Families": { icon: Users, color: "text-navy", bgColor: "bg-navy/10" },
+    "Food Security": { icon: Utensils, color: "text-gold", bgColor: "bg-gold/10" },
+    "Disaster Relief": { icon: Globe, color: "text-error", bgColor: "bg-error/10" },
+  };
+  return map[name] || { icon: Heart, color: "text-navy", bgColor: "bg-navy/10" };
+};
 
-const milestones = [
-  { amount: 100, label: "$100", achieved: true },
-  { amount: 250, label: "$250", achieved: false },
-  { amount: 500, label: "$500", achieved: false },
-  { amount: 1000, label: "$1,000", achieved: false },
-];
+// ============ IMPACT ESTIMATOR ============
+const estimateImpact = (causeName: string, amount: number): string => {
+  const map: Record<string, string> = {
+    "Food Security": `${Math.floor(amount / 5)} meals provided to families in need`,
+    "LIFT Health": `Medical support for ${Math.floor(amount / 100)} patient(s)`,
+    "LIFT Ability": `Mobility aids for ${Math.floor(amount / 150)} individual(s)`,
+    "LIFT Community": `Community support worth $${amount}`,
+    "Children & Families": `Support for ${Math.floor(amount / 50)} child(ren)`,
+    "LIFT Protect": `Confidential support worth $${amount}`,
+    "Disaster Relief": `Emergency relief worth $${amount}`,
+  };
+  return map[causeName] || `Impact worth $${amount}`;
+};
 
-// ============ MAIN COMPONENT ============
 export default function MyImpactPage() {
-  const currentTotal = 150;
-  const nextMilestone = 250;
-  const progressToNext = (currentTotal / nextMilestone) * 100;
+  const [donations, setDonations] = useState<Donation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchDonations() {
+      try {
+        setLoading(true);
+        const res = await fetch("/api/donations");
+        if (!res.ok) throw new Error("Failed to fetch donations");
+        const data = await res.json();
+        setDonations(data);
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchDonations();
+  }, []);
+
+  // ============ CALCULATIONS ============
+  const completedDonations = donations.filter((d) => d.status === "COMPLETED");
+  
+  const totalDonated = completedDonations.reduce((sum, d) => sum + d.totalAmount, 0);
+  const totalDonationsCount = completedDonations.length;
+
+  // Group allocations by cause
+  const causeMap: Record<string, { donated: number; count: number }> = {};
+  completedDonations.forEach((donation) => {
+    donation.allocations.forEach((alloc) => {
+      const causeName = alloc.program?.name || alloc.project?.title || "General Fund";
+      if (!causeMap[causeName]) {
+        causeMap[causeName] = { donated: 0, count: 0 };
+      }
+      causeMap[causeName].donated += alloc.amount;
+      causeMap[causeName].count += 1;
+    });
+  });
+
+  const causesSupported = Object.entries(causeMap).map(([name, data]) => ({
+    name,
+    donated: data.donated,
+    impact: estimateImpact(name, data.donated),
+    ...getCauseIcon(name),
+  }));
+
+  const causesCount = causesSupported.length;
+
+  // Estimate lives impacted (rough calculation)
+  const livesImpacted = Math.round(totalDonated / 3.33); // $10 = 3 meals roughly
+
+  // Recent impact (last 5 allocations)
+  const recentImpact = completedDonations
+    .flatMap((d) =>
+      d.allocations.map((a) => ({
+        id: a.id,
+        causeName: a.program?.name || a.project?.title || "General Fund",
+        amount: a.amount,
+        date: d.createdAt,
+      }))
+    )
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, 3);
+
+  // Milestones
+  const milestonesData = [
+    { amount: 100, label: "$100" },
+    { amount: 250, label: "$250" },
+    { amount: 500, label: "$500" },
+    { amount: 1000, label: "$1,000" },
+  ];
+  const milestones = milestonesData.map((m) => ({
+    ...m,
+    achieved: totalDonated >= m.amount,
+  }));
+
+  // Next milestone
+  const nextMilestone = milestonesData.find((m) => totalDonated < m.amount)?.amount || totalDonated;
+  const progressToNext = nextMilestone > 0 ? Math.min((totalDonated / nextMilestone) * 100, 100) : 100;
+
+  // Member since (earliest donation year)
+  const memberSince = completedDonations.length > 0
+    ? new Date(Math.min(...completedDonations.map((d) => new Date(d.createdAt).getTime()))).getFullYear()
+    : new Date().getFullYear();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center">
+          <Loader2 className="w-10 h-10 text-navy animate-spin mx-auto mb-4" />
+          <p className="text-ink/60">Loading your impact...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white rounded-card p-12 text-center border border-gray-100">
+        <p className="text-error font-semibold mb-2">Error loading impact data</p>
+        <p className="text-ink/60 text-sm">{error}</p>
+      </div>
+    );
+  }
+
+  // No donations yet
+  if (completedDonations.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="font-display text-2xl md:text-3xl font-bold text-navy">My Impact</h1>
+          <p className="text-ink/70 mt-1">See how your generosity is changing lives around the world.</p>
+        </div>
+        <div className="bg-white rounded-card p-12 text-center border border-gray-100">
+          <div className="bg-cloud rounded-full p-6 w-fit mx-auto mb-4">
+            <Heart className="w-12 h-12 text-ink/30" />
+          </div>
+          <h3 className="font-display text-xl font-bold text-navy">No Impact Yet</h3>
+          <p className="text-ink/60 mt-2 max-w-md mx-auto">
+            You haven't made any completed donations yet. Start giving today and see your impact grow.
+          </p>
+          <Link
+            href="/giving"
+            className="btn-lift inline-flex items-center gap-2 bg-gold text-ink font-semibold px-6 py-3 rounded-input hover:bg-gold/90 transition-colors shadow-lg mt-6"
+          >
+            <Heart className="w-5 h-5" />
+            Make Your First Donation
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const impactStats = [
+    { label: "Lifetime Giving", value: `$${totalDonated}`, subtext: `Across ${totalDonationsCount} donation(s)`, icon: DollarSign, color: "text-gold", bgColor: "bg-gold/10" },
+    { label: "Lives Impacted", value: `${livesImpacted}`, subtext: "Estimated (meals/patients)", icon: Users, color: "text-teal", bgColor: "bg-teal/10" },
+    { label: "Causes Supported", value: `${causesCount}`, subtext: "Different programs", icon: Heart, color: "text-purple", bgColor: "bg-purple/10" },
+    { label: "Member Since", value: `${memberSince}`, subtext: "Active Donor", icon: Award, color: "text-navy", bgColor: "bg-navy/10" },
+  ];
 
   return (
     <div className="space-y-6">
       
-      {/* ================= HEADER ================= */}
+      {/* HEADER */}
       <div>
         <h1 className="font-display text-2xl md:text-3xl font-bold text-navy">
           My Impact
@@ -153,7 +222,7 @@ export default function MyImpactPage() {
         </p>
       </div>
 
-      {/* ================= HERO IMPACT CARD ================= */}
+      {/* HERO IMPACT CARD */}
       <div className="bg-gradient-to-br from-navy to-navy/90 rounded-card p-6 md:p-8 text-white relative overflow-hidden">
         <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-gold/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
         <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-purple/20 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
@@ -169,36 +238,38 @@ export default function MyImpactPage() {
             You've Made a Real Difference
           </h2>
           <p className="text-white/80 mt-4 max-w-2xl leading-relaxed">
-            Your generosity has supported <span className="text-gold font-bold">4 causes</span> and 
-            impacted <span className="text-gold font-bold">45+ lives</span>. Every donation creates 
+            Your generosity has supported <span className="text-gold font-bold">{causesCount} cause(s)</span> and 
+            impacted <span className="text-gold font-bold">{livesImpacted}+ lives</span>. Every donation creates 
             a ripple of lasting change.
           </p>
 
           {/* Progress to Next Milestone */}
-          <div className="mt-8 bg-white/10 backdrop-blur-sm rounded-card p-6 border border-white/20">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <Target className="w-5 h-5 text-gold" />
-                <span className="font-semibold text-sm">Next Milestone: $250</span>
+          {nextMilestone > totalDonated && (
+            <div className="mt-8 bg-white/10 backdrop-blur-sm rounded-card p-6 border border-white/20">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Target className="w-5 h-5 text-gold" />
+                  <span className="font-semibold text-sm">Next Milestone: ${nextMilestone}</span>
+                </div>
+                <span className="text-gold font-display font-bold text-lg">
+                  ${totalDonated} / ${nextMilestone}
+                </span>
               </div>
-              <span className="text-gold font-display font-bold text-lg">
-                ${currentTotal} / ${nextMilestone}
-              </span>
+              <div className="w-full bg-white/20 rounded-full h-3 overflow-hidden">
+                <div
+                  className="bg-gradient-to-r from-gold to-gold/70 h-3 rounded-full transition-all duration-1000"
+                  style={{ width: `${progressToNext}%` }}
+                ></div>
+              </div>
+              <p className="text-white/70 text-xs mt-3">
+                Just ${nextMilestone - totalDonated} more to unlock your next impact milestone!
+              </p>
             </div>
-            <div className="w-full bg-white/20 rounded-full h-3 overflow-hidden">
-              <div
-                className="bg-gradient-to-r from-gold to-gold/70 h-3 rounded-full transition-all duration-1000"
-                style={{ width: `${progressToNext}%` }}
-              ></div>
-            </div>
-            <p className="text-white/70 text-xs mt-3">
-              Just ${nextMilestone - currentTotal} more to unlock your next impact milestone!
-            </p>
-          </div>
+          )}
         </div>
       </div>
 
-      {/* ================= STATS CARDS ================= */}
+      {/* STATS CARDS */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {impactStats.map((stat) => {
           const Icon = stat.icon;
@@ -215,7 +286,7 @@ export default function MyImpactPage() {
         })}
       </div>
 
-      {/* ================= CAUSES SUPPORTED ================= */}
+      {/* CAUSES SUPPORTED */}
       <div className="bg-white rounded-card p-6 md:p-8 shadow-sm border border-gray-100">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
@@ -236,6 +307,7 @@ export default function MyImpactPage() {
         <div className="space-y-4">
           {causesSupported.map((cause, i) => {
             const Icon = cause.icon;
+            const progress = totalDonated > 0 ? (cause.donated / totalDonated) * 100 : 0;
             return (
               <div key={i} className="p-4 bg-cloud rounded-card border border-gray-100">
                 <div className="flex items-start gap-4">
@@ -253,7 +325,7 @@ export default function MyImpactPage() {
                     <div className="w-full bg-white rounded-full h-1.5 overflow-hidden">
                       <div
                         className="bg-gradient-to-r from-gold to-gold/70 h-1.5 rounded-full transition-all duration-1000"
-                        style={{ width: `${cause.progress}%` }}
+                        style={{ width: `${progress}%` }}
                       ></div>
                     </div>
                   </div>
@@ -264,7 +336,7 @@ export default function MyImpactPage() {
         </div>
       </div>
 
-      {/* ================= RECENT IMPACT ================= */}
+      {/* RECENT IMPACT */}
       <div className="bg-white rounded-card p-6 md:p-8 shadow-sm border border-gray-100">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
@@ -273,36 +345,37 @@ export default function MyImpactPage() {
               Recent Impact
             </h2>
           </div>
-          <span className="text-ink/50 text-xs">Last 30 days</span>
+          <span className="text-ink/50 text-xs">Last donations</span>
         </div>
 
         <div className="space-y-4">
           {recentImpact.map((item) => {
-            const Icon = item.icon;
+            const causeInfo = getCauseIcon(item.causeName);
+            const Icon = causeInfo.icon;
             return (
               <div
                 key={item.id}
                 className="flex items-start gap-4 p-4 rounded-card hover:bg-cloud/50 transition-colors"
               >
-                <div className={`${item.bgColor} rounded-full p-3 shrink-0`}>
-                  <Icon className={`w-5 h-5 ${item.color}`} />
+                <div className={`${causeInfo.bgColor} rounded-full p-3 shrink-0`}>
+                  <Icon className={`w-5 h-5 ${causeInfo.color}`} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="font-semibold text-navy text-sm">
-                      {item.title}
+                      ${item.amount} to {item.causeName}
                     </h3>
-                    {item.verified && (
-                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-success bg-success/10 px-2 py-0.5 rounded-full">
-                        <CheckCircle className="w-3 h-3" />
-                        Verified
-                      </span>
-                    )}
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-success bg-success/10 px-2 py-0.5 rounded-full">
+                      <CheckCircle className="w-3 h-3" />
+                      Verified
+                    </span>
                   </div>
                   <p className="text-ink/70 text-sm mt-1 leading-relaxed">
-                    {item.description}
+                    {estimateImpact(item.causeName, item.amount)}
                   </p>
-                  <p className="text-ink/40 text-xs mt-1">{item.date}</p>
+                  <p className="text-ink/40 text-xs mt-1">
+                    {new Date(item.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                  </p>
                 </div>
               </div>
             );
@@ -310,7 +383,7 @@ export default function MyImpactPage() {
         </div>
       </div>
 
-      {/* ================= MILESTONES ================= */}
+      {/* MILESTONES */}
       <div className="bg-white rounded-card p-6 md:p-8 shadow-sm border border-gray-100">
         <div className="flex items-center gap-2 mb-6">
           <Award className="w-5 h-5 text-gold" />
@@ -353,7 +426,7 @@ export default function MyImpactPage() {
         </div>
       </div>
 
-      {/* ================= CTA ================= */}
+      {/* CTA */}
       <div className="bg-purple rounded-card p-6 md:p-8 text-white relative overflow-hidden">
         <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-gold/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
