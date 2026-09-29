@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Search, Loader2, ChevronRight } from "lucide-react";
 
-export default function SearchPage() {
+// ✅ Inner component jo useSearchParams use karta hai
+function SearchResults() {
   const searchParams = useSearchParams();
   const query = searchParams.get("q") || "";
   const [results, setResults] = useState<any>(null);
@@ -40,7 +41,10 @@ export default function SearchPage() {
     );
   }
 
-  const hasResults = results?.programs?.length > 0 || results?.projects?.length > 0 || results?.stories?.length > 0;
+  const hasResults =
+    results?.programs?.length > 0 ||
+    results?.projects?.length > 0 ||
+    results?.stories?.length > 0;
 
   return (
     <div className="max-w-container mx-auto px-6 py-12 md:py-16">
@@ -56,7 +60,10 @@ export default function SearchPage() {
           <Search className="w-16 h-16 text-ink/20 mx-auto mb-4" />
           <h3 className="font-display text-xl font-bold text-navy">No results found</h3>
           <p className="text-ink/60 mt-2">Try a different search term.</p>
-          <Link href="/" className="inline-block mt-6 text-navy font-semibold hover:text-gold transition-colors">
+          <Link
+            href="/"
+            className="inline-block mt-6 text-navy font-semibold hover:text-gold transition-colors"
+          >
             Back to Home
           </Link>
         </div>
@@ -149,5 +156,20 @@ export default function SearchPage() {
         </div>
       )}
     </div>
+  );
+}
+
+// ✅ Main page component jo Suspense se wrap karta hai
+export default function SearchPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Loader2 className="w-10 h-10 text-navy animate-spin" />
+        </div>
+      }
+    >
+      <SearchResults />
+    </Suspense>
   );
 }
