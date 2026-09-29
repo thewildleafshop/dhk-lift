@@ -3,11 +3,18 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> } // ✅ Next.js 16: params is a Promise
 ) {
   try {
+    // ✅ params ko await karein
+    const { id } = await params;
+
+    if (!id) {
+      return NextResponse.json({ error: "Application ID is required" }, { status: 400 });
+    }
+
     const app = await prisma.application.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: {
         user: { select: { id: true, name: true, email: true, phone: true, country: true } },
         program: { select: { id: true, name: true, slug: true, category: true } },
@@ -48,14 +55,15 @@ export async function GET(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> } // ✅ Next.js 16: params is a Promise
 ) {
   try {
+    const { id } = await params; // ✅ params ko await karein
     const body = await request.json();
     const { status, notes } = body;
 
     const updated = await prisma.application.update({
-      where: { id: params.id },
+      where: { id: id },
       data: {
         ...(status && { status, reviewedAt: new Date() }),
         ...(notes !== undefined && { notes }),
