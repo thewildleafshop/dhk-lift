@@ -31,17 +31,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           );
         }
 
-        // ✅ Check 2: User ka status SUSPENDED ya INACTIVE hai?
+        // ✅ Check 2: Suspended/Inactive?
         if (user.status === "SUSPENDED") {
-          throw new Error(
-            "Your account has been suspended. Please contact support for assistance."
-          );
+          throw new Error("Your account has been suspended. Please contact support.");
         }
 
         if (user.status === "INACTIVE") {
-          throw new Error(
-            "Your account is inactive. Please contact support."
-          );
+          throw new Error("Your account is inactive. Please contact support.");
         }
 
         // ✅ Check 3: Password sahi hai?
@@ -54,7 +50,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           throw new Error("Invalid password");
         }
 
-        // ✅ Sab checks pass — User return karein
         return {
           id: user.id,
           email: user.email,
@@ -66,7 +61,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 30 * 24 * 60 * 60,
   },
   pages: {
     signIn: "/login",

@@ -42,13 +42,18 @@ export async function POST(req: Request) {
         email,
         password: hashedPassword,
         role: "MEMBER",
-        status: "PENDING_VERIFICATION",  // ✅ Yeh change kiya
+        status: "PENDING_VERIFICATION",
       },
     });
 
-    // ✅ Email verification token generate karein
+    // ✅ Verification token generate karein
     const verificationToken = crypto.randomBytes(32).toString("hex");
     const expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+    // Purane tokens delete karein (agar mojood hain)
+    await prisma.verificationToken.deleteMany({
+      where: { identifier: email },
+    });
 
     await prisma.verificationToken.create({
       data: {
@@ -58,13 +63,24 @@ export async function POST(req: Request) {
       },
     });
 
-    // ✅ Verification email bhejein (Resend ke zariye)
+    // ✅ Verification email bhejein
     const emailResult = await sendVerificationEmail(email, verificationToken);
 
     if (!emailResult.success) {
       console.error("Failed to send verification email:", emailResult.error);
-      // Agar email fail ho jaye, toh bhi user ko error na dein
-      // (Kyunki user already create ho chuka hai)
+      // Email fail hone par bhi user create ho chuka hai
+      // Lekin user ko batayein ke email bhejne mein masla hua
+      return NextResponse.json(
+        {
+          message: "Account created but we couldn't send the verification email. Please contact support.",
+          user: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+          },
+        },
+        { status: 201 }
+      );
     }
 
     return NextResponse.json(

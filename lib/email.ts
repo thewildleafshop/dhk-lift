@@ -64,7 +64,7 @@ export async function sendVerificationEmail(email: string, token: string) {
   }
 }
 
-// ============ WELCOME EMAIL (After verification) ============
+// ============ WELCOME EMAIL ============
 export async function sendWelcomeEmail(email: string, name: string) {
   try {
     const { data, error } = await resend.emails.send({

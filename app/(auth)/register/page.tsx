@@ -31,48 +31,47 @@ export default function RegisterPage() {
     setFormData({ ...formData, [field]: value });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
+ const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setError("");
 
-    // Validation
-    if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
+  if (formData.password !== formData.confirmPassword) {
+    setError("Passwords do not match.");
+    return;
+  }
 
-    if (formData.password.length < 8) {
-      setError("Password must be at least 8 characters long.");
-      return;
-    }
+  if (formData.password.length < 8) {
+    setError("Password must be at least 8 characters long.");
+    return;
+  }
 
-    setIsLoading(true);
+  setIsLoading(true);
 
-    try {
-      const res = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          password: formData.password,
-        }),
-      });
+  try {
+    const res = await fetch("/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+      }),
+    });
 
-      const data = await res.json();
+    const data = await res.json();
 
-      if (!res.ok) {
-        setError(data.error || "Registration failed. Please try again.");
-        setIsLoading(false);
-      } else {
-        router.push("/login?registered=true");
-      }
-    } catch (err) {
-      setError("Something went wrong. Please try again.");
+    if (!res.ok) {
+      setError(data.error || "Registration failed. Please try again.");
       setIsLoading(false);
+    } else {
+      // ✅ Login page par na bhejein, balki verification message page par bhejein
+      router.push(`/register/success?email=${encodeURIComponent(formData.email)}`);
     }
-  };
-
+  } catch (err) {
+    setError("Something went wrong. Please try again.");
+    setIsLoading(false);
+  }
+};
   return (
     <div className="w-full max-w-md">
       {/* Logo */}

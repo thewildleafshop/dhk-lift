@@ -34,11 +34,11 @@ export async function POST(req: Request) {
     }
 
     // ✅ User ko verify karein
-    await prisma.user.update({
+    const user = await prisma.user.update({
       where: { email: verificationToken.identifier },
       data: {
         emailVerified: new Date(),
-        status: "ACTIVE",  // ✅ Status update
+        status: "ACTIVE",
       },
     });
 
@@ -46,6 +46,10 @@ export async function POST(req: Request) {
     await prisma.verificationToken.delete({
       where: { token },
     });
+
+    // ✅ Welcome email bhejein (optional)
+    // const { sendWelcomeEmail } = await import("@/lib/email");
+    // await sendWelcomeEmail(user.email, user.name || "Friend");
 
     return NextResponse.json({
       message: "Email verified successfully! You can now log in.",

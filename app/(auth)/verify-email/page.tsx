@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { CheckCircle, XCircle, Loader2, Mail } from "lucide-react";
+import { CheckCircle, XCircle, Loader2 } from "lucide-react";
 
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
@@ -102,7 +102,7 @@ function VerifyEmailContent() {
             <p className="text-ink/60 mt-2">{message}</p>
             <Link
               href="/login"
-              className="btn-text inline-block mt-6 text-navy font-semibold hover:text-gold transition-colors"
+              className="inline-block mt-6 text-navy font-semibold hover:text-gold transition-colors"
             >
               Back to Login
             </Link>
