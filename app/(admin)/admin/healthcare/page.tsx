@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
-  Stethoscope,
   Search,
   Filter,
   Eye,
@@ -12,16 +11,14 @@ import {
   Clock,
   AlertCircle,
   DollarSign,
-  Users,
   FileText,
-  Pill,
+  Heart,
   Building2,
-  TrendingUp,
   Download,
   Inbox,
-  Heart,
   Activity,
   ChevronRight,
+  Loader2,
 } from "lucide-react";
 
 // ============ TYPES ============
@@ -30,218 +27,128 @@ type FundStatus = "ACTIVE" | "PAUSED" | "CLOSED";
 type TabType = "claims" | "funds" | "providers";
 
 // ============ CLAIM STATUS CONFIG ============
-const claimStatusConfig: Record<ClaimStatus, { label: string; color: string; bg: string; icon: any }> = {
+const claimStatusConfig: Record<string, { label: string; color: string; bg: string; icon: any }> = {
   SUBMITTED: { label: "Submitted", color: "text-info", bg: "bg-info/10", icon: Clock },
+  VERIFICATION: { label: "Verification", color: "text-info", bg: "bg-info/10", icon: AlertCircle },
   UNDER_REVIEW: { label: "Under Review", color: "text-warning", bg: "bg-warning/10", icon: AlertCircle },
   ADDITIONAL_INFO: { label: "Info Needed", color: "text-warning", bg: "bg-warning/10", icon: AlertCircle },
   APPROVED: { label: "Approved", color: "text-success", bg: "bg-success/10", icon: CheckCircle },
   PARTIAL: { label: "Partially Approved", color: "text-teal", bg: "bg-teal/10", icon: CheckCircle },
   DENIED: { label: "Denied", color: "text-error", bg: "bg-error/10", icon: XCircle },
   PAID: { label: "Paid", color: "text-success", bg: "bg-success/10", icon: CheckCircle },
+  COMPLETED: { label: "Paid", color: "text-success", bg: "bg-success/10", icon: CheckCircle },
+  DRAFT: { label: "Draft", color: "text-ink/70", bg: "bg-gray-100", icon: FileText },
 };
 
-// ============ DEMO CLAIMS ============
-const demoClaims = [
-  {
-    id: "1",
-    claimNumber: "CLM-24001",
-    patientName: "Bilal Ahmed",
-    provider: "Aga Khan Hospital",
-    fund: "Cancer Care Fund",
-    amount: 3500,
-    status: "UNDER_REVIEW" as ClaimStatus,
-    submittedDate: "Apr 8, 2026",
-    daysPending: 2,
-    invoiceCount: 3,
-  },
-  {
-    id: "2",
-    claimNumber: "CLM-24002",
-    patientName: "Ayesha Khan",
-    provider: "Shifa International",
-    fund: "Heart Disease Fund",
-    amount: 8200,
-    status: "SUBMITTED" as ClaimStatus,
-    submittedDate: "Apr 7, 2026",
-    daysPending: 3,
-    invoiceCount: 5,
-  },
-  {
-    id: "3",
-    claimNumber: "CLM-24003",
-    patientName: "Hassan Ali",
-    provider: "MedPlus Pharmacy",
-    fund: "Diabetes Care Fund",
-    amount: 450,
-    status: "APPROVED" as ClaimStatus,
-    submittedDate: "Apr 5, 2026",
-    daysPending: 5,
-    invoiceCount: 2,
-  },
-  {
-    id: "4",
-    claimNumber: "CLM-24004",
-    patientName: "Fatima Bibi",
-    provider: "Indus Hospital",
-    fund: "Kidney Disease Fund",
-    amount: 12000,
-    status: "ADDITIONAL_INFO" as ClaimStatus,
-    submittedDate: "Apr 2, 2026",
-    daysPending: 8,
-    invoiceCount: 8,
-  },
-  {
-    id: "5",
-    claimNumber: "CLM-24005",
-    patientName: "Ahmed Khan",
-    provider: "Aga Khan Hospital",
-    fund: "Cancer Care Fund",
-    amount: 5000,
-    status: "PAID" as ClaimStatus,
-    submittedDate: "Mar 28, 2026",
-    daysPending: 0,
-    invoiceCount: 4,
-  },
-];
+// ============ INTERFACES ============
+interface Claim {
+  id: string;
+  confirmationNo: string;
+  patientName: string;
+  provider: string;
+  fund: string;
+  amount: number | null;
+  status: string;
+  submittedAt: string | null;
+  documentCount: number;
+}
 
-// ============ DEMO FUNDS ============
-const demoFunds = [
-  {
-    id: "1",
-    name: "Cancer Care Fund",
-    disease: "Cancer",
-    status: "ACTIVE" as FundStatus,
-    balance: 450000,
-    committed: 320000,
-    totalRaised: 1200000,
-    applications: 245,
-    color: "text-purple",
-    bgColor: "bg-purple/10",
-  },
-  {
-    id: "2",
-    name: "Heart Disease Fund",
-    disease: "Cardiovascular",
-    status: "ACTIVE" as FundStatus,
-    balance: 280000,
-    committed: 180000,
-    totalRaised: 850000,
-    applications: 180,
-    color: "text-error",
-    bgColor: "bg-error/10",
-  },
-  {
-    id: "3",
-    name: "Kidney Disease Fund",
-    disease: "Renal",
-    status: "ACTIVE" as FundStatus,
-    balance: 150000,
-    committed: 95000,
-    totalRaised: 420000,
-    applications: 95,
-    color: "text-info",
-    bgColor: "bg-info/10",
-  },
-  {
-    id: "4",
-    name: "Diabetes Care Fund",
-    disease: "Diabetes",
-    status: "ACTIVE" as FundStatus,
-    balance: 95000,
-    committed: 48000,
-    totalRaised: 280000,
-    applications: 120,
-    color: "text-teal",
-    bgColor: "bg-teal/10",
-  },
-  {
-    id: "5",
-    name: "Rare Disease Fund",
-    disease: "Multiple",
-    status: "PAUSED" as FundStatus,
-    balance: 25000,
-    committed: 25000,
-    totalRaised: 120000,
-    applications: 35,
-    color: "text-warning",
-    bgColor: "bg-warning/10",
-  },
-];
+interface Fund {
+  id: string;
+  name: string;
+  disease: string;
+  status: FundStatus;
+  balance: number;
+  committed: number;
+  totalRaised: number;
+  applications: number;
+  color: string;
+  bgColor: string;
+}
 
-// ============ DEMO PROVIDERS ============
-const demoProviders = [
-  {
-    id: "1",
-    name: "Aga Khan Hospital",
-    type: "Hospital",
-    location: "Karachi, Pakistan",
-    verified: true,
-    totalClaims: 45,
-    totalAmount: 285000,
-    pendingClaims: 8,
-  },
-  {
-    id: "2",
-    name: "Shifa International",
-    type: "Hospital",
-    location: "Islamabad, Pakistan",
-    verified: true,
-    totalClaims: 32,
-    totalAmount: 195000,
-    pendingClaims: 5,
-  },
-  {
-    id: "3",
-    name: "Indus Hospital",
-    type: "Hospital",
-    location: "Karachi, Pakistan",
-    verified: true,
-    totalClaims: 28,
-    totalAmount: 165000,
-    pendingClaims: 3,
-  },
-  {
-    id: "4",
-    name: "MedPlus Pharmacy",
-    type: "Pharmacy",
-    location: "Lahore, Pakistan",
-    verified: true,
-    totalClaims: 120,
-    totalAmount: 45000,
-    pendingClaims: 12,
-  },
-  {
-    id: "5",
-    name: "Care Pharmacy",
-    type: "Pharmacy",
-    location: "Karachi, Pakistan",
-    verified: false,
-    totalClaims: 15,
-    totalAmount: 8000,
-    pendingClaims: 2,
-  },
-];
+interface Provider {
+  id: string;
+  name: string;
+  type: string;
+  location: string;
+  verified: boolean;
+  totalClaims: number;
+  totalAmount: number;
+  pendingClaims: number;
+}
 
 export default function AdminHealthcarePage() {
   const [activeTab, setActiveTab] = useState<TabType>("claims");
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<ClaimStatus | "ALL">("ALL");
+  const [statusFilter, setStatusFilter] = useState<string>("ALL");
 
-  const filteredClaims = demoClaims.filter((claim) => {
+  // ✅ States for API data
+  const [claims, setClaims] = useState<Claim[]>([]);
+  const [funds, setFunds] = useState<Fund[]>([]);
+  const [providers, setProviders] = useState<Provider[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // ✅ Fetch data from API
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        setLoading(true);
+        const res = await fetch("/api/admin/healthcare");
+        if (!res.ok) throw new Error("Failed to fetch healthcare data");
+        const data = await res.json();
+        
+        setClaims(data.claims || []);
+        setFunds(data.funds || []);
+        setProviders(data.providers || []);
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
+
+  // Filter claims
+  const filteredClaims = claims.filter((claim) => {
     const matchesSearch =
-      claim.patientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      claim.provider.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      claim.claimNumber.toLowerCase().includes(searchQuery.toLowerCase());
+      (claim.patientName || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (claim.provider || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (claim.confirmationNo || "").toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === "ALL" || claim.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
+  // Stats
   const stats = {
-    totalClaims: demoClaims.length,
-    pendingClaims: demoClaims.filter((c) => ["SUBMITTED", "UNDER_REVIEW", "ADDITIONAL_INFO"].includes(c.status)).length,
-    activeFunds: demoFunds.filter((f) => f.status === "ACTIVE").length,
-    totalBalance: demoFunds.reduce((sum, f) => sum + f.balance, 0),
+    totalClaims: claims.length,
+    pendingClaims: claims.filter((c) => ["SUBMITTED", "VERIFICATION", "UNDER_REVIEW", "ADDITIONAL_INFO"].includes(c.status)).length,
+    activeFunds: funds.filter((f) => f.status === "ACTIVE").length,
+    totalBalance: funds.reduce((sum, f) => sum + f.balance, 0),
   };
+
+  // Loading State
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center">
+          <Loader2 className="w-10 h-10 text-navy animate-spin mx-auto mb-4" />
+          <p className="text-ink/60">Loading healthcare data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error State
+  if (error) {
+    return (
+      <div className="bg-white rounded-card p-12 text-center border border-gray-100">
+        <p className="text-error font-semibold mb-2">Error loading healthcare data</p>
+        <p className="text-ink/60 text-sm">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -341,7 +248,7 @@ export default function AdminHealthcarePage() {
               <Filter className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-ink/40" />
               <select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as any)}
+                onChange={(e) => setStatusFilter(e.target.value)}
                 className="pl-10 pr-8 py-3 rounded-input border border-gray-200 focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy bg-white text-ink text-sm appearance-none cursor-pointer"
               >
                 <option value="ALL">All Statuses</option>
@@ -368,7 +275,7 @@ export default function AdminHealthcarePage() {
 
               <div className="divide-y divide-gray-100">
                 {filteredClaims.map((claim) => {
-                  const status = claimStatusConfig[claim.status];
+                  const status = claimStatusConfig[claim.status] || claimStatusConfig.SUBMITTED;
                   const StatusIcon = status.icon;
                   return (
                     <div key={claim.id} className="px-6 py-5 hover:bg-cloud/30 transition-colors">
@@ -376,7 +283,7 @@ export default function AdminHealthcarePage() {
                         <div className="col-span-4 flex items-center gap-3">
                           <div className="bg-navy/5 rounded-full w-10 h-10 flex items-center justify-center shrink-0">
                             <span className="font-display font-bold text-navy text-sm">
-                              {claim.patientName.charAt(0)}
+                              {(claim.patientName || "U").charAt(0)}
                             </span>
                           </div>
                           <div className="min-w-0">
@@ -384,7 +291,7 @@ export default function AdminHealthcarePage() {
                               {claim.patientName}
                             </p>
                             <p className="text-ink/50 text-xs truncate">
-                              {claim.claimNumber} • {claim.provider}
+                              {claim.confirmationNo} • {claim.provider}
                             </p>
                           </div>
                         </div>
@@ -395,18 +302,15 @@ export default function AdminHealthcarePage() {
                         </div>
                         <div className="col-span-2">
                           <p className="font-display font-bold text-navy">
-                            ${claim.amount.toLocaleString()}
+                            {claim.amount ? `$${claim.amount.toLocaleString()}` : "—"}
                           </p>
-                          <p className="text-ink/50 text-xs">{claim.invoiceCount} invoices</p>
+                          <p className="text-ink/50 text-xs">{claim.documentCount} invoices</p>
                         </div>
                         <div className="col-span-2">
                           <span className={`inline-flex items-center gap-1 text-xs font-semibold ${status.color} ${status.bg} px-2.5 py-1 rounded-full`}>
                             <StatusIcon className="w-3 h-3" />
                             {status.label}
                           </span>
-                          {claim.daysPending > 0 && (
-                            <p className="text-ink/50 text-xs mt-1">{claim.daysPending} days pending</p>
-                          )}
                         </div>
                         <div className="col-span-2 flex items-center justify-end">
                           <Link
@@ -425,18 +329,18 @@ export default function AdminHealthcarePage() {
                           <div className="flex items-center gap-3 flex-1 min-w-0">
                             <div className="bg-navy/5 rounded-full w-10 h-10 flex items-center justify-center shrink-0">
                               <span className="font-display font-bold text-navy text-sm">
-                                {claim.patientName.charAt(0)}
+                                {(claim.patientName || "U").charAt(0)}
                               </span>
                             </div>
                             <div className="min-w-0">
                               <p className="font-semibold text-navy text-sm truncate">
                                 {claim.patientName}
                               </p>
-                              <p className="text-ink/50 text-xs truncate">{claim.claimNumber}</p>
+                              <p className="text-ink/50 text-xs truncate">{claim.confirmationNo}</p>
                             </div>
                           </div>
                           <p className="font-display font-bold text-navy shrink-0">
-                            ${claim.amount.toLocaleString()}
+                            {claim.amount ? `$${claim.amount.toLocaleString()}` : "—"}
                           </p>
                         </div>
                         <div className="flex items-center gap-2 flex-wrap">
@@ -477,8 +381,8 @@ export default function AdminHealthcarePage() {
       {/* ================= FUNDS TAB ================= */}
       {activeTab === "funds" && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {demoFunds.map((fund) => {
-            const utilization = (fund.committed / fund.totalRaised) * 100;
+          {funds.map((fund) => {
+            const utilization = fund.totalRaised > 0 ? (fund.committed / fund.totalRaised) * 100 : 0;
             return (
               <div key={fund.id} className="card-hover bg-white rounded-card p-6 shadow-sm border border-gray-100">
                 <div className="flex items-start justify-between mb-4">
@@ -569,7 +473,7 @@ export default function AdminHealthcarePage() {
           </div>
 
           <div className="divide-y divide-gray-100">
-            {demoProviders.map((provider) => (
+            {providers.map((provider) => (
               <div key={provider.id} className="px-6 py-5 hover:bg-cloud/30 transition-colors">
                 <div className="hidden lg:grid grid-cols-12 gap-4 items-center">
                   <div className="col-span-4 flex items-center gap-3">
