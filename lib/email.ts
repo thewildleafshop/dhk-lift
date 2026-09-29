@@ -2,113 +2,101 @@ import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const FROM_EMAIL = process.env.EMAIL_FROM || "onboarding@resend.dev";
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
 
-// ============ WELCOME EMAIL ============
-export async function sendWelcomeEmail(to: string, name: string) {
+// ============ VERIFICATION EMAIL ============
+export async function sendVerificationEmail(email: string, token: string) {
+  const verifyLink = `${APP_URL}/verify-email?token=${token}`;
+
   try {
-    await resend.emails.send({
-      from: FROM_EMAIL,
-      to,
-      subject: "Welcome to DHK LIFT",
+    const { data, error } = await resend.emails.send({
+      from: `DHK LIFT <${FROM_EMAIL}>`,
+      to: email,
+      subject: "Verify your DHK LIFT account",
       html: `
-        <div style="font-family: Inter, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h1 style="color: #0B468F;">Welcome to DHK LIFT, ${name}!</h1>
-          <p>Thank you for joining our global humanitarian platform. Together, we can create lasting change.</p>
-          <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard" style="background: #FFA20D; color: #1F2D3D; padding: 12px 24px; text-decoration: none; border-radius: 8px; display: inline-block; margin-top: 16px; font-weight: bold;">
-            Go to Dashboard
-          </a>
-          <p style="margin-top: 32px; color: #666; font-size: 14px;">
-            — The DHK LIFT Team
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #0B468F; margin: 0;">DHK LIFT</h1>
+          </div>
+          
+          <div style="background: #F6F8FB; border-radius: 12px; padding: 30px; text-align: center;">
+            <h2 style="color: #0B468F; margin-top: 0;">Welcome to DHK LIFT!</h2>
+            <p style="color: #1F2D3D; font-size: 16px; line-height: 1.6;">
+              Thank you for creating an account. Please verify your email address to get started.
+            </p>
+            
+            <a href="${verifyLink}" 
+               style="display: inline-block; background: #FFA20D; color: #1F2D3D; padding: 14px 32px; 
+                      border-radius: 10px; text-decoration: none; font-weight: bold; margin: 20px 0;">
+              Verify Email Address
+            </a>
+            
+            <p style="color: #666; font-size: 14px; margin-top: 20px;">
+              Or copy this link into your browser:
+            </p>
+            <p style="color: #0B468F; font-size: 12px; word-break: break-all;">
+              ${verifyLink}
+            </p>
+            
+            <p style="color: #999; font-size: 12px; margin-top: 30px;">
+              This link will expire in 24 hours.
+            </p>
+          </div>
+          
+          <p style="color: #999; font-size: 12px; text-align: center; margin-top: 30px;">
+            © ${new Date().getFullYear()} DHK LIFT. All rights reserved.
           </p>
         </div>
       `,
     });
-    return { success: true };
+
+    if (error) {
+      console.error("Resend error:", error);
+      return { success: false, error };
+    }
+
+    console.log("Verification email sent:", data);
+    return { success: true, data };
+  } catch (error) {
+    console.error("Email send error:", error);
+    return { success: false, error };
+  }
+}
+
+// ============ WELCOME EMAIL (After verification) ============
+export async function sendWelcomeEmail(email: string, name: string) {
+  try {
+    const { data, error } = await resend.emails.send({
+      from: `DHK LIFT <${FROM_EMAIL}>`,
+      to: email,
+      subject: "Welcome to DHK LIFT!",
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #0B468F; margin: 0;">DHK LIFT</h1>
+          </div>
+          
+          <div style="background: #F6F8FB; border-radius: 12px; padding: 30px;">
+            <h2 style="color: #0B468F; margin-top: 0;">Welcome, ${name}!</h2>
+            <p style="color: #1F2D3D; font-size: 16px; line-height: 1.6;">
+              Your account has been verified successfully. You're now part of a global community 
+              working together to make a difference.
+            </p>
+            
+            <a href="${APP_URL}/dashboard" 
+               style="display: inline-block; background: #0B468F; color: white; padding: 14px 32px; 
+                      border-radius: 10px; text-decoration: none; font-weight: bold; margin: 20px 0;">
+              Go to Dashboard
+            </a>
+          </div>
+        </div>
+      `,
+    });
+
+    return { success: !error, data };
   } catch (error) {
     console.error("Welcome email error:", error);
-    return { success: false, error };
-  }
-}
-
-// ============ DONATION RECEIPT ============
-export async function sendDonationReceipt(
-  to: string,
-  data: { donorName: string; amount: number; cause: string; transactionId: string }
-) {
-  try {
-    await resend.emails.send({
-      from: FROM_EMAIL,
-      to,
-      subject: `Donation Receipt - $${data.amount}`,
-      html: `
-        <div style="font-family: Inter, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h1 style="color: #0B468F;">Thank You for Your Donation!</h1>
-          <p>Dear ${data.donorName},</p>
-          <p>Your generous donation of <strong>$${data.amount}</strong> to <strong>${data.cause}</strong> has been received.</p>
-          <div style="background: #F6F8FB; padding: 16px; border-radius: 8px; margin: 24px 0;">
-            <p style="margin: 4px 0;"><strong>Transaction ID:</strong> ${data.transactionId}</p>
-            <p style="margin: 4px 0;"><strong>Amount:</strong> $${data.amount}</p>
-            <p style="margin: 4px 0;"><strong>Cause:</strong> ${data.cause}</p>
-          </div>
-          <p>Your donation will directly support our mission. You'll receive updates on the impact of your gift.</p>
-          <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/donations" style="background: #FFA20D; color: #1F2D3D; padding: 12px 24px; text-decoration: none; border-radius: 8px; display: inline-block; margin-top: 16px; font-weight: bold;">
-            View Your Donations
-          </a>
-          <p style="margin-top: 32px; color: #666; font-size: 14px;">
-            — The DHK LIFT Team
-          </p>
-        </div>
-      `,
-    });
-    return { success: true };
-  } catch (error) {
-    console.error("Receipt email error:", error);
-    return { success: false, error };
-  }
-}
-
-// ============ APPLICATION STATUS ============
-export async function sendApplicationStatusEmail(
-  to: string,
-  data: { name: string; confirmationNo: string; status: string; programName: string }
-) {
-  try {
-    const statusMessages: Record<string, string> = {
-      SUBMITTED: "Your application has been submitted successfully.",
-      UNDER_REVIEW: "Your application is being reviewed by our team.",
-      ADDITIONAL_INFO: "We need additional information to process your application.",
-      APPROVED: "Congratulations! Your application has been approved.",
-      DENIED: "We regret to inform you that your application has been denied.",
-      COMPLETED: "Your application has been completed.",
-    };
-
-    await resend.emails.send({
-      from: FROM_EMAIL,
-      to,
-      subject: `Application Update - ${data.confirmationNo}`,
-      html: `
-        <div style="font-family: Inter, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h1 style="color: #0B468F;">Application Update</h1>
-          <p>Dear ${data.name},</p>
-          <p>${statusMessages[data.status] || "Your application status has been updated."}</p>
-          <div style="background: #F6F8FB; padding: 16px; border-radius: 8px; margin: 24px 0;">
-            <p style="margin: 4px 0;"><strong>Confirmation No:</strong> ${data.confirmationNo}</p>
-            <p style="margin: 4px 0;"><strong>Program:</strong> ${data.programName}</p>
-            <p style="margin: 4px 0;"><strong>Status:</strong> ${data.status}</p>
-          </div>
-          <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/applications" style="background: #FFA20D; color: #1F2D3D; padding: 12px 24px; text-decoration: none; border-radius: 8px; display: inline-block; margin-top: 16px; font-weight: bold;">
-            View Application
-          </a>
-          <p style="margin-top: 32px; color: #666; font-size: 14px;">
-            — The DHK LIFT Team
-          </p>
-        </div>
-      `,
-    });
-    return { success: true };
-  } catch (error) {
-    console.error("Application status email error:", error);
     return { success: false, error };
   }
 }

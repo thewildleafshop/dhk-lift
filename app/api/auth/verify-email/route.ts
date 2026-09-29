@@ -1,58 +1,57 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export async function GET(req: Request) {
+export async function POST(req: Request) {
   try {
-    const { searchParams } = new URL(req.url);
-    const token = searchParams.get("token");
+    const { token } = await req.json();
 
     if (!token) {
       return NextResponse.json(
-        { error: "Verification token is required" },
+        { error: "Token is required" },
         { status: 400 }
       );
     }
 
-    // Find token
     const verificationToken = await prisma.verificationToken.findUnique({
       where: { token },
     });
 
     if (!verificationToken) {
       return NextResponse.json(
-        { error: "Invalid verification token" },
+        { error: "Invalid or expired token" },
         { status: 400 }
       );
     }
 
-    // Check expiry
     if (verificationToken.expires < new Date()) {
       await prisma.verificationToken.delete({
         where: { token },
       });
       return NextResponse.json(
-        { error: "Verification token has expired" },
+        { error: "Token has expired. Please register again." },
         { status: 400 }
       );
     }
 
-    // Update user
+    // ✅ User ko verify karein
     await prisma.user.update({
       where: { email: verificationToken.identifier },
-      data: { emailVerified: new Date() },
+      data: {
+        emailVerified: new Date(),
+        status: "ACTIVE",  // ✅ Status update
+      },
     });
 
-    // Delete token
+    // ✅ Token delete karein
     await prisma.verificationToken.delete({
       where: { token },
     });
 
-    return NextResponse.json(
-      { message: "Email verified successfully" },
-      { status: 200 }
-    );
+    return NextResponse.json({
+      message: "Email verified successfully! You can now log in.",
+    });
   } catch (error) {
-    console.error("Email verification error:", error);
+    console.error("Verification error:", error);
     return NextResponse.json(
       { error: "Something went wrong" },
       { status: 500 }

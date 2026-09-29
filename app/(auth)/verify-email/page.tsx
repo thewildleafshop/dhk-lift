@@ -1,16 +1,9 @@
 "use client";
 
-import Link from "next/link";
-import { useState, useEffect, Suspense } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import {
-  CheckCircle,
-  XCircle,
-  Loader2,
-  Mail,
-  ArrowRight,
-  Home,
-} from "lucide-react";
+import Link from "next/link";
+import { CheckCircle, XCircle, Loader2, Mail } from "lucide-react";
 
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
@@ -21,39 +14,43 @@ function VerifyEmailContent() {
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    if (!token) {
-      setStatus("error");
-      setMessage("No verification token found.");
-      return;
-    }
+    async function verify() {
+      if (!token) {
+        setStatus("error");
+        setMessage("No verification token provided.");
+        return;
+      }
 
-    const verify = async () => {
       try {
-        const res = await fetch(`/api/auth/verify-email?token=${token}`);
+        const res = await fetch("/api/auth/verify-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token }),
+        });
+
         const data = await res.json();
 
         if (res.ok) {
           setStatus("success");
-          setMessage("Your email has been verified successfully!");
+          setMessage(data.message || "Email verified successfully!");
+          setTimeout(() => router.push("/login?verified=true"), 3000);
         } else {
           setStatus("error");
           setMessage(data.error || "Verification failed.");
         }
-      } catch (err) {
+      } catch (error) {
         setStatus("error");
         setMessage("Something went wrong. Please try again.");
       }
-    };
+    }
 
     verify();
-  }, [token]);
+  }, [token, router]);
 
   return (
     <div className="w-full max-w-md">
-      
-      {/* Logo */}
       <div className="text-center mb-8">
-        <Link href="/" className="inline-block">
+        <Link href="/">
           <img
             src="/logo/logo.png"
             alt="DHK LIFT"
@@ -63,23 +60,16 @@ function VerifyEmailContent() {
       </div>
 
       <div className="bg-white rounded-card shadow-xl p-8 border border-gray-100 text-center">
-        
-        {/* Loading */}
         {status === "loading" && (
           <>
-            <div className="bg-gold/10 rounded-full p-4 w-fit mx-auto mb-4">
-              <Loader2 className="w-12 h-12 text-gold animate-spin" />
-            </div>
+            <Loader2 className="w-16 h-16 text-navy animate-spin mx-auto mb-4" />
             <h1 className="font-display text-2xl font-bold text-navy">
-              Verifying Your Email
+              Verifying your email...
             </h1>
-            <p className="text-ink/70 mt-3 text-sm">
-              Please wait while we verify your email address...
-            </p>
+            <p className="text-ink/60 mt-2">Please wait a moment.</p>
           </>
         )}
 
-        {/* Success */}
         {status === "success" && (
           <>
             <div className="bg-success/10 rounded-full p-4 w-fit mx-auto mb-4">
@@ -88,33 +78,19 @@ function VerifyEmailContent() {
             <h1 className="font-display text-2xl font-bold text-navy">
               Email Verified!
             </h1>
-            <p className="text-ink/70 mt-3 text-sm">
-              {message}
+            <p className="text-ink/60 mt-2">{message}</p>
+            <p className="text-ink/50 text-sm mt-4">
+              Redirecting to login...
             </p>
-            <p className="text-ink/60 text-xs mt-2">
-              You can now log in to your account.
-            </p>
-
-            <div className="mt-6 flex flex-col gap-3">
-              <Link
-                href="/login"
-                className="btn-lift bg-gold text-ink font-semibold px-6 py-3.5 rounded-input hover:bg-gold/90 transition-colors shadow-lg flex items-center justify-center gap-2"
-              >
-                <ArrowRight className="w-4 h-4" />
-                Go to Login
-              </Link>
-              <Link
-                href="/"
-                className="btn-lift border-2 border-navy/20 text-navy font-semibold px-6 py-3.5 rounded-input hover:bg-navy/5 transition-colors flex items-center justify-center gap-2 text-sm"
-              >
-                <Home className="w-4 h-4" />
-                Back to Home
-              </Link>
-            </div>
+            <Link
+              href="/login"
+              className="btn-lift inline-block mt-6 bg-navy text-white font-semibold px-8 py-3 rounded-input hover:bg-navy/90 transition-colors"
+            >
+              Go to Login
+            </Link>
           </>
         )}
 
-        {/* Error */}
         {status === "error" && (
           <>
             <div className="bg-error/10 rounded-full p-4 w-fit mx-auto mb-4">
@@ -123,34 +99,13 @@ function VerifyEmailContent() {
             <h1 className="font-display text-2xl font-bold text-navy">
               Verification Failed
             </h1>
-            <p className="text-ink/70 mt-3 text-sm">
-              {message}
-            </p>
-
-            <div className="mt-6 bg-info/5 border border-info/20 rounded-input p-4 text-left">
-              <div className="flex items-start gap-2">
-                <Mail className="w-4 h-4 text-info mt-0.5 shrink-0" />
-                <p className="text-xs text-ink/70 leading-relaxed">
-                  The verification link may have expired. Please contact support 
-                  or register again to receive a new link.
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-6 flex flex-col gap-3">
-              <Link
-                href="/register"
-                className="btn-lift bg-gold text-ink font-semibold px-6 py-3.5 rounded-input hover:bg-gold/90 transition-colors shadow-lg flex items-center justify-center gap-2"
-              >
-                Register Again
-              </Link>
-              <Link
-                href="/contact"
-                className="btn-lift border-2 border-navy/20 text-navy font-semibold px-6 py-3.5 rounded-input hover:bg-navy/5 transition-colors flex items-center justify-center gap-2 text-sm"
-              >
-                Contact Support
-              </Link>
-            </div>
+            <p className="text-ink/60 mt-2">{message}</p>
+            <Link
+              href="/login"
+              className="btn-text inline-block mt-6 text-navy font-semibold hover:text-gold transition-colors"
+            >
+              Back to Login
+            </Link>
           </>
         )}
       </div>
@@ -162,8 +117,8 @@ export default function VerifyEmailPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-cloud flex items-center justify-center">
-          <div className="w-8 h-8 border-4 border-navy/20 border-t-navy rounded-full animate-spin"></div>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Loader2 className="w-10 h-10 text-navy animate-spin" />
         </div>
       }
     >

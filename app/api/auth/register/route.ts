@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
+import { sendVerificationEmail } from "@/lib/email";
 
 export async function POST(req: Request) {
   try {
@@ -34,17 +35,18 @@ export async function POST(req: Request) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // ✅ User ko PENDING_VERIFICATION status ke saath create karein
     const user = await prisma.user.create({
       data: {
         name,
         email,
         password: hashedPassword,
         role: "MEMBER",
-        status: "ACTIVE",
+        status: "PENDING_VERIFICATION",  // ✅ Yeh change kiya
       },
     });
 
-    // Create email verification token
+    // ✅ Email verification token generate karein
     const verificationToken = crypto.randomBytes(32).toString("hex");
     const expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
@@ -56,20 +58,18 @@ export async function POST(req: Request) {
       },
     });
 
-    // In production: Send verification email
-    const verifyLink = `${process.env.NEXT_PUBLIC_APP_URL}/verify-email?token=${verificationToken}`;
-    
-    console.log("========================================");
-    console.log("EMAIL VERIFICATION LINK:");
-    console.log(verifyLink);
-    console.log("========================================");
+    // ✅ Verification email bhejein (Resend ke zariye)
+    const emailResult = await sendVerificationEmail(email, verificationToken);
 
-    // TODO: Send email via SendGrid/Resend
-    // await sendVerificationEmail(email, verifyLink);
+    if (!emailResult.success) {
+      console.error("Failed to send verification email:", emailResult.error);
+      // Agar email fail ho jaye, toh bhi user ko error na dein
+      // (Kyunki user already create ho chuka hai)
+    }
 
     return NextResponse.json(
       {
-        message: "Account created successfully",
+        message: "Account created. Please check your email to verify your account.",
         user: {
           id: user.id,
           name: user.name,

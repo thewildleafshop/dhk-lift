@@ -24,6 +24,27 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           throw new Error("User not found");
         }
 
+        // ✅ Check 1: Email verified hai ya nahi?
+        if (!user.emailVerified) {
+          throw new Error(
+            "Please verify your email address before logging in. Check your inbox for the verification link."
+          );
+        }
+
+        // ✅ Check 2: User ka status SUSPENDED ya INACTIVE hai?
+        if (user.status === "SUSPENDED") {
+          throw new Error(
+            "Your account has been suspended. Please contact support for assistance."
+          );
+        }
+
+        if (user.status === "INACTIVE") {
+          throw new Error(
+            "Your account is inactive. Please contact support."
+          );
+        }
+
+        // ✅ Check 3: Password sahi hai?
         const isPasswordValid = await bcrypt.compare(
           credentials.password as string,
           user.password
@@ -33,6 +54,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           throw new Error("Invalid password");
         }
 
+        // ✅ Sab checks pass — User return karein
         return {
           id: user.id,
           email: user.email,
