@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
+import { useState } from "react";
 import {
   Heart,
   HandHeart,
@@ -11,17 +14,45 @@ import {
 } from "lucide-react";
 
 export default function HomePage() {
+  const [newsletterEmail, setNewsletterEmail] = useState("");
+  const [newsletterStatus, setNewsletterStatus] = useState<
+    "idle" | "loading" | "success" | "error"
+  >("idle");
+
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newsletterEmail || !newsletterEmail.includes("@")) {
+      setNewsletterStatus("error");
+      return;
+    }
+
+    setNewsletterStatus("loading");
+    try {
+      const res = await fetch("/api/newsletter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: newsletterEmail }),
+      });
+
+      if (res.ok) {
+        setNewsletterStatus("success");
+        setNewsletterEmail("");
+      } else {
+        setNewsletterStatus("error");
+      }
+    } catch (error) {
+      setNewsletterStatus("error");
+    }
+  };
+
   return (
     <main className="min-h-screen bg-cloud">
       {/* ================= HERO SECTION ================= */}
       <section className="relative bg-navy text-white overflow-hidden">
-        {/* Decorative gradient blobs */}
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gold/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
         <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-purple/20 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
 
         <div className="max-w-container mx-auto px-6 py-16 md:py-24 lg:py-32 grid lg:grid-cols-2 gap-12 items-center relative z-10">
-          
-          {/* Left Side: Text Content */}
           <div className="space-y-6 text-center lg:text-left animate-slide-in-left">
             <p className="text-gold font-semibold tracking-wider uppercase text-xs md:text-sm">
               Together for a Brighter Tomorrow
@@ -35,7 +66,6 @@ export default function HomePage() {
               Your support empowers families, builds communities, and creates a better future.
             </p>
 
-            {/* Buttons */}
             <div className="flex flex-wrap gap-3 md:gap-4 pt-4 justify-center lg:justify-start">
               <Link
                 href="/giving"
@@ -54,7 +84,6 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Right Side: Image */}
           <div className="relative h-[300px] sm:h-[400px] lg:h-[500px] rounded-card overflow-hidden shadow-2xl animate-fade-in delay-300">
             <Image
               src="/images/hero/salah-darwish-us-R2Rdew7E-unsplash.jpg"
@@ -64,7 +93,6 @@ export default function HomePage() {
               className="object-cover"
               priority
             />
-            {/* Floating Badge */}
             <div className="absolute bottom-4 right-4 md:bottom-6 md:right-6 bg-white/95 backdrop-blur-sm p-3 md:p-4 rounded-card shadow-lg max-w-[180px] md:max-w-[200px] z-10 animate-float">
               <p className="text-ink text-xs md:text-sm font-semibold">
                 "Small contributions. Big dreams."
@@ -94,9 +122,7 @@ export default function HomePage() {
           </Link>
         </div>
 
-        {/* Programs Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Card 1 */}
           <div className="card-hover bg-white rounded-card shadow-sm overflow-hidden border border-gray-100">
             <div className="overflow-hidden">
               <img
@@ -119,7 +145,6 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Card 2 */}
           <div className="card-hover bg-white rounded-card shadow-sm overflow-hidden border border-gray-100">
             <div className="overflow-hidden">
               <img
@@ -142,7 +167,6 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Card 3 */}
           <div className="card-hover bg-white rounded-card shadow-sm overflow-hidden border border-gray-100">
             <div className="overflow-hidden">
               <img
@@ -165,7 +189,6 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Card 4 */}
           <div className="card-hover bg-white rounded-card shadow-sm overflow-hidden border border-gray-100">
             <div className="overflow-hidden">
               <img
@@ -189,7 +212,6 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Mobile View All */}
         <div className="mt-8 text-center md:hidden">
           <Link
             href="/programs"
@@ -220,12 +242,11 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
       {/* ================= MEDICAL EQUIPMENT SECTION ================= */}
       <section className="bg-white border-y border-gray-100">
         <div className="max-w-container mx-auto px-6 py-16 md:py-24">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
-            
-            {/* Left: Content */}
             <div className="order-2 lg:order-1">
               <div className="bg-teal/10 rounded-full p-3 w-fit mb-4">
                 <Accessibility className="w-7 h-7 text-teal" />
@@ -274,7 +295,6 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Right: Stats/Visual */}
             <div className="order-1 lg:order-2">
               <div className="bg-gradient-to-br from-navy to-navy/90 rounded-card p-8 text-white relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-[200px] h-[200px] bg-gold/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
@@ -311,6 +331,7 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
       {/* ================= STORIES SECTION ================= */}
       <section className="max-w-container mx-auto px-6 py-16 md:py-24">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
@@ -332,7 +353,6 @@ export default function HomePage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Story 1 */}
           <div className="card-hover bg-white rounded-card shadow-sm overflow-hidden border border-gray-100">
             <div className="overflow-hidden">
               <img
@@ -360,7 +380,6 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Story 2 */}
           <div className="card-hover bg-white rounded-card shadow-sm overflow-hidden border border-gray-100">
             <div className="overflow-hidden">
               <img
@@ -388,7 +407,6 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Story 3 */}
           <div className="card-hover bg-white rounded-card shadow-sm overflow-hidden border border-gray-100">
             <div className="overflow-hidden">
               <img
@@ -417,7 +435,6 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Mobile View All Stories */}
         <div className="mt-8 text-center md:hidden">
           <Link
             href="/stories"
@@ -544,19 +561,36 @@ export default function HomePage() {
           <p className="text-ink/70 mt-3 max-w-xl mx-auto">
             Get updates on projects, impact stories, and ways to help — straight to your inbox.
           </p>
-          <form className="mt-8 max-w-md mx-auto flex flex-col sm:flex-row gap-3">
+          <form
+            onSubmit={handleNewsletterSubmit}
+            className="mt-8 max-w-md mx-auto flex flex-col sm:flex-row gap-3"
+          >
             <input
               type="email"
+              value={newsletterEmail}
+              onChange={(e) => setNewsletterEmail(e.target.value)}
               placeholder="Enter your email"
               className="flex-1 px-5 py-4 rounded-input border border-gray-200 bg-white text-ink focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy"
+              disabled={newsletterStatus === "loading"}
             />
             <button
               type="submit"
-              className="btn-lift bg-navy text-white font-semibold px-8 py-4 rounded-input hover:bg-navy/90 transition-colors shadow-lg"
+              disabled={newsletterStatus === "loading"}
+              className="btn-lift bg-navy text-white font-semibold px-8 py-4 rounded-input hover:bg-navy/90 transition-colors shadow-lg disabled:opacity-50"
             >
-              Subscribe
+              {newsletterStatus === "loading" ? "Subscribing..." : "Subscribe"}
             </button>
           </form>
+          {newsletterStatus === "success" && (
+            <p className="text-success text-sm mt-4 font-medium">
+              ✅ Thank you for subscribing!
+            </p>
+          )}
+          {newsletterStatus === "error" && (
+            <p className="text-error text-sm mt-4 font-medium">
+              ❌ Please enter a valid email address.
+            </p>
+          )}
           <p className="text-ink/50 text-xs mt-4">
             We respect your privacy. Unsubscribe at any time.
           </p>
@@ -567,7 +601,6 @@ export default function HomePage() {
       <footer className="bg-navy text-white">
         <div className="max-w-container mx-auto px-6 py-16">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-10">
-            {/* Brand */}
             <div>
               <h3 className="font-display text-2xl font-bold">DHK LIFT</h3>
               <p className="text-white/60 text-sm mt-3 leading-relaxed">
@@ -575,43 +608,39 @@ export default function HomePage() {
               </p>
             </div>
 
-            {/* Platform */}
             <div>
-  <h4 className="font-display font-semibold text-lg mb-4">Platform</h4>
-  <ul className="space-y-2 text-white/70 text-sm">
-    <li><Link href="/assistance" className="hover:text-gold transition-colors">Assistance</Link></li>
-    <li><Link href="/equipment" className="hover:text-gold transition-colors">Medical Equipment</Link></li>
-    <li><Link href="/giving" className="hover:text-gold transition-colors">Giving</Link></li>
-    <li><Link href="/membership" className="hover:text-gold transition-colors">Membership</Link></li>
-    <li><Link href="/partnerships" className="hover:text-gold transition-colors">Global Partnerships</Link></li>
-    <li><Link href="/projects" className="hover:text-gold transition-colors">Projects</Link></li>
-  </ul>
-</div>
+              <h4 className="font-display font-semibold text-lg mb-4">Platform</h4>
+              <ul className="space-y-2 text-white/70 text-sm">
+                <li><Link href="/assistance" className="hover:text-gold transition-colors">Assistance</Link></li>
+                <li><Link href="/equipment" className="hover:text-gold transition-colors">Medical Equipment</Link></li>
+                <li><Link href="/giving" className="hover:text-gold transition-colors">Giving</Link></li>
+                <li><Link href="/membership" className="hover:text-gold transition-colors">Membership</Link></li>
+                <li><Link href="/partnerships" className="hover:text-gold transition-colors">Global Partnerships</Link></li>
+                <li><Link href="/projects" className="hover:text-gold transition-colors">Projects</Link></li>
+              </ul>
+            </div>
 
-           {/* Organization */}
-<div>
-  <h4 className="font-display font-semibold text-lg mb-4">Organization</h4>
-  <ul className="space-y-2 text-white/70 text-sm">
-    <li><Link href="/about" className="hover:text-gold transition-colors">About Us</Link></li>
-    <li><Link href="/transparency" className="hover:text-gold transition-colors">Transparency</Link></li>
-    <li><Link href="/stories" className="hover:text-gold transition-colors">Stories</Link></li>
-    <li><Link href="/faq" className="hover:text-gold transition-colors">FAQ</Link></li>
-    <li><Link href="/contact" className="hover:text-gold transition-colors">Contact</Link></li>
-  </ul>
-</div>
+            <div>
+              <h4 className="font-display font-semibold text-lg mb-4">Organization</h4>
+              <ul className="space-y-2 text-white/70 text-sm">
+                <li><Link href="/about" className="hover:text-gold transition-colors">About Us</Link></li>
+                <li><Link href="/transparency" className="hover:text-gold transition-colors">Transparency</Link></li>
+                <li><Link href="/stories" className="hover:text-gold transition-colors">Stories</Link></li>
+                <li><Link href="/faq" className="hover:text-gold transition-colors">FAQ</Link></li>
+                <li><Link href="/contact" className="hover:text-gold transition-colors">Contact</Link></li>
+              </ul>
+            </div>
 
-{/* NEW: For Partners & Providers column */}
-<div>
-  <h4 className="font-display font-semibold text-lg mb-4">For Partners</h4>
-  <ul className="space-y-2 text-white/70 text-sm">
-    <li><Link href="/partnerships" className="hover:text-gold transition-colors">Global Partnerships</Link></li>
-    <li><Link href="/partnerships/apply" className="hover:text-gold transition-colors">Become a Partner</Link></li>
-    <li><Link href="/healthcare/providers/register" className="hover:text-gold transition-colors">Healthcare Providers</Link></li>
-    <li><Link href="/healthcare/pharmacies/register" className="hover:text-gold transition-colors">Pharmacy Registration</Link></li>
-  </ul>
-</div>
+            <div>
+              <h4 className="font-display font-semibold text-lg mb-4">For Partners</h4>
+              <ul className="space-y-2 text-white/70 text-sm">
+                <li><Link href="/partnerships" className="hover:text-gold transition-colors">Global Partnerships</Link></li>
+                <li><Link href="/partnerships/apply" className="hover:text-gold transition-colors">Become a Partner</Link></li>
+                <li><Link href="/healthcare/providers/register" className="hover:text-gold transition-colors">Healthcare Providers</Link></li>
+                <li><Link href="/healthcare/pharmacies/register" className="hover:text-gold transition-colors">Pharmacy Registration</Link></li>
+              </ul>
+            </div>
 
-            {/* Legal */}
             <div>
               <h4 className="font-display font-semibold text-lg mb-4">Legal</h4>
               <ul className="space-y-2 text-white/70 text-sm">
