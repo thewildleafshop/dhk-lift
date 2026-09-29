@@ -1,8 +1,10 @@
+"use client";
+
 import Link from "next/link";
+import { useState, useMemo } from "react";
 import {
     Accessibility,
     Search,
-    Filter,
     ChevronRight,
     CheckCircle,
     Heart,
@@ -29,7 +31,8 @@ const equipment = [
     {
         id: 1,
         name: "Standard Wheelchair",
-        category: "Wheelchairs",
+        category: "wheelchairs",
+        categoryLabel: "Wheelchairs",
         description: "Durable manual wheelchair suitable for daily use. Adjustable armrests and footrests.",
         availability: "Available",
         image: "/images/programs/disasterRelief.png",
@@ -40,7 +43,8 @@ const equipment = [
     {
         id: 2,
         name: "Electric Wheelchair",
-        category: "Wheelchairs",
+        category: "wheelchairs",
+        categoryLabel: "Wheelchairs",
         description: "Motorized wheelchair with joystick control. Ideal for users with limited mobility.",
         availability: "Limited",
         image: "/images/programs/healthcare.png",
@@ -51,7 +55,8 @@ const equipment = [
     {
         id: 3,
         name: "Walking Frame / Walker",
-        category: "Mobility Aids",
+        category: "mobility",
+        categoryLabel: "Mobility Aids",
         description: "Sturdy walking frame for rehabilitation and elderly support. Foldable design.",
         availability: "Available",
         image: "/images/programs/communityVolunteers.png",
@@ -62,7 +67,8 @@ const equipment = [
     {
         id: 4,
         name: "Oxygen Concentrator",
-        category: "Respiratory",
+        category: "respiratory",
+        categoryLabel: "Respiratory",
         description: "Portable oxygen concentrator for patients with respiratory conditions.",
         availability: "Waitlist",
         image: "/images/programs/healthcare.png",
@@ -73,7 +79,8 @@ const equipment = [
     {
         id: 5,
         name: "Hospital Bed (Adjustable)",
-        category: "Home Equipment",
+        category: "home",
+        categoryLabel: "Home Equipment",
         description: "Adjustable hospital bed for home care. Includes side rails and remote control.",
         availability: "Available",
         image: "/images/programs/disasterRelief.png",
@@ -84,7 +91,8 @@ const equipment = [
     {
         id: 6,
         name: "Prosthetic Leg (Below Knee)",
-        category: "Prosthetics",
+        category: "prosthetics",
+        categoryLabel: "Prosthetics",
         description: "Custom-fitted prosthetic limb for below-knee amputees. Includes rehabilitation support.",
         availability: "Limited",
         image: "/images/programs/education.png",
@@ -95,6 +103,24 @@ const equipment = [
 ];
 
 export default function EquipmentPage() {
+    const [searchQuery, setSearchQuery] = useState("");
+    const [activeCategory, setActiveCategory] = useState("all");
+
+    // ✅ Filter equipment based on search and category
+    const filteredEquipment = useMemo(() => {
+        return equipment.filter((item) => {
+            const matchesSearch =
+                item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                item.categoryLabel.toLowerCase().includes(searchQuery.toLowerCase());
+
+            const matchesCategory =
+                activeCategory === "all" || item.category === activeCategory;
+
+            return matchesSearch && matchesCategory;
+        });
+    }, [searchQuery, activeCategory]);
+
     return (
         <main className="min-h-screen bg-cloud">
 
@@ -123,13 +149,23 @@ export default function EquipmentPage() {
                             <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-ink/40" />
                             <input
                                 type="text"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder="Search equipment..."
                                 className="w-full pl-14 pr-32 py-4 md:py-5 rounded-input border-0 bg-white text-ink placeholder:text-ink/40 focus:outline-none focus:ring-4 focus:ring-gold/30 shadow-2xl text-base"
                             />
-                            <button className="absolute right-2 top-1/2 -translate-y-1/2 bg-gold text-ink font-semibold px-6 py-3 rounded-input hover:bg-gold/90 transition-colors text-sm">
+                            <button
+                                type="button"
+                                className="absolute right-2 top-1/2 -translate-y-1/2 bg-gold text-ink font-semibold px-6 py-3 rounded-input hover:bg-gold/90 transition-colors text-sm"
+                            >
                                 Search
                             </button>
                         </div>
+                        {searchQuery && (
+                            <p className="text-white/70 text-sm mt-3">
+                                Showing {filteredEquipment.length} result(s) for "{searchQuery}"
+                            </p>
+                        )}
                     </div>
                 </div>
             </section>
@@ -157,19 +193,23 @@ export default function EquipmentPage() {
                     </div>
                 </div>
             </section>
+
             {/* ================= CATEGORIES ================= */}
             <section className="max-w-container mx-auto px-6 py-8">
                 <div className="bg-white rounded-card p-4 shadow-sm border border-gray-100">
                     <div className="flex flex-wrap gap-2">
-                        {categories.map((cat, i) => {
+                        {categories.map((cat) => {
                             const Icon = cat.icon;
+                            const isActive = activeCategory === cat.id;
                             return (
                                 <button
                                     key={cat.id}
-                                    className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${i === 0
-                                            ? "bg-navy text-white"
+                                    onClick={() => setActiveCategory(cat.id)}
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                                        isActive
+                                            ? "bg-navy text-white shadow-sm"
                                             : "bg-cloud text-ink/70 hover:bg-navy/5 hover:text-navy"
-                                        }`}
+                                    }`}
                                 >
                                     <Icon className="w-4 h-4" />
                                     {cat.label}
@@ -182,56 +222,77 @@ export default function EquipmentPage() {
 
             {/* ============ EQUIPMENT GRID ============ */}
             <section className="max-w-container mx-auto px-6 pb-16 md:pb-24">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {equipment.map((item) => {
-                        const Icon = item.icon;
-                        const availabilityColor =
-                            item.availability === "Available" ? "text-success bg-success/10" :
-                                item.availability === "Limited" ? "text-warning bg-warning/10" :
-                                    "text-error bg-error/10";
+                {filteredEquipment.length === 0 ? (
+                    <div className="bg-white rounded-card p-12 text-center border border-gray-100">
+                        <Search className="w-12 h-12 text-ink/30 mx-auto mb-4" />
+                        <h3 className="font-display text-xl font-bold text-navy">
+                            No Equipment Found
+                        </h3>
+                        <p className="text-ink/60 mt-2">
+                            Try a different search term or category.
+                        </p>
+                        <button
+                            onClick={() => {
+                                setSearchQuery("");
+                                setActiveCategory("all");
+                            }}
+                            className="mt-6 text-navy font-semibold hover:text-gold transition-colors"
+                        >
+                            Clear Filters
+                        </button>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {filteredEquipment.map((item) => {
+                            const Icon = item.icon;
+                            const availabilityColor =
+                                item.availability === "Available" ? "text-success bg-success/10" :
+                                    item.availability === "Limited" ? "text-warning bg-warning/10" :
+                                        "text-error bg-error/10";
 
-                        return (
-                            <div
-                                key={item.id}
-                                className="card-hover bg-white rounded-card shadow-sm border border-gray-100 overflow-hidden flex flex-col group"
-                            >
-                                <div className="relative h-48 overflow-hidden">
-                                    <img
-                                        src={item.image}
-                                        alt={item.name}
-                                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                                    />
-                                    <div className={`absolute top-4 left-4 ${item.bgColor} backdrop-blur-sm rounded-full p-3`}>
-                                        <Icon className={`w-5 h-5 ${item.color}`} />
+                            return (
+                                <div
+                                    key={item.id}
+                                    className="card-hover bg-white rounded-card shadow-sm border border-gray-100 overflow-hidden flex flex-col group"
+                                >
+                                    <div className="relative h-48 overflow-hidden">
+                                        <img
+                                            src={item.image}
+                                            alt={item.name}
+                                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                        />
+                                        <div className={`absolute top-4 left-4 ${item.bgColor} backdrop-blur-sm rounded-full p-3`}>
+                                            <Icon className={`w-5 h-5 ${item.color}`} />
+                                        </div>
+                                        <div className={`absolute top-4 right-4 ${availabilityColor} backdrop-blur-sm text-xs font-semibold px-3 py-1.5 rounded-full`}>
+                                            {item.availability}
+                                        </div>
                                     </div>
-                                    <div className={`absolute top-4 right-4 ${availabilityColor} backdrop-blur-sm text-xs font-semibold px-3 py-1.5 rounded-full`}>
-                                        {item.availability}
+
+                                    <div className="p-6 flex flex-col flex-1">
+                                        <span className="text-xs font-semibold text-gold bg-gold/10 px-3 py-1 rounded-full w-fit">
+                                            {item.categoryLabel}
+                                        </span>
+                                        <h3 className="font-display font-bold text-navy text-lg mt-3">
+                                            {item.name}
+                                        </h3>
+                                        <p className="text-ink/70 text-sm mt-2 leading-relaxed flex-1">
+                                            {item.description}
+                                        </p>
+
+                                        <Link
+                                            href={`/equipment/request?item=${item.id}`}
+                                            className="btn-lift mt-5 bg-gold text-ink font-semibold px-6 py-3 rounded-input hover:bg-gold/90 transition-colors flex items-center justify-center gap-2 text-sm"
+                                        >
+                                            Request Equipment
+                                            <ChevronRight className="w-4 h-4" />
+                                        </Link>
                                     </div>
                                 </div>
-
-                                <div className="p-6 flex flex-col flex-1">
-                                    <span className="text-xs font-semibold text-gold bg-gold/10 px-3 py-1 rounded-full w-fit">
-                                        {item.category}
-                                    </span>
-                                    <h3 className="font-display font-bold text-navy text-lg mt-3">
-                                        {item.name}
-                                    </h3>
-                                    <p className="text-ink/70 text-sm mt-2 leading-relaxed flex-1">
-                                        {item.description}
-                                    </p>
-
-                                    <Link
-                                        href={`/equipment/request?item=${item.id}`}
-                                        className="btn-lift mt-5 bg-gold text-ink font-semibold px-6 py-3 rounded-input hover:bg-gold/90 transition-colors flex items-center justify-center gap-2 text-sm"
-                                    >
-                                        Request Equipment
-                                        <ChevronRight className="w-4 h-4" />
-                                    </Link>
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
+                            );
+                        })}
+                    </div>
+                )}
             </section>
 
             {/* ================= CTA ================= */}
