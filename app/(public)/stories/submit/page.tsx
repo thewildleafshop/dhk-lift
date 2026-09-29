@@ -6,16 +6,16 @@ import { useRouter } from "next/navigation";
 import {
   ChevronLeft,
   BookOpen,
-  User,
   FileText,
   Tag,
-  Image as ImageIcon,
   CheckCircle,
   Send,
   Loader2,
   Shield,
   Lock,
+  XCircle,
 } from "lucide-react";
+import FileUploader from "@/components/uploads/FileUploader";
 
 // ============ CATEGORIES ============
 const categories = [
@@ -122,7 +122,7 @@ export default function SubmitStoryPage() {
             Tell Us Your Story
           </h1>
           <p className="text-white/80 mt-2 max-w-2xl">
-            Your story can inspire others and show the real impact of generosity. 
+            Your story can inspire others and show the real impact of generosity.
             All stories are reviewed before publishing.
           </p>
         </div>
@@ -223,22 +223,33 @@ export default function SubmitStoryPage() {
               </label>
             </div>
 
-            {/* Image URL */}
+            {/* Story Image Upload */}
             <div>
               <label className="block text-sm font-semibold text-ink mb-2">
-                Image URL (Optional)
+                Story Image (Optional)
               </label>
-              <div className="relative">
-                <ImageIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-ink/40" />
-                <input
-                  type="url"
-                  value={formData.imageUrl}
-                  onChange={(e) => updateField("imageUrl", e.target.value)}
-                  placeholder="https://example.com/image.jpg"
-                  className="w-full pl-11 pr-4 py-3 rounded-input border border-gray-200 focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy text-sm"
+              {formData.imageUrl ? (
+                <div className="relative rounded-card overflow-hidden border border-gray-200">
+                  <img
+                    src={formData.imageUrl}
+                    alt="Uploaded"
+                    className="w-full h-64 object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => updateField("imageUrl", "")}
+                    className="absolute top-3 right-3 bg-error text-white rounded-full p-2 hover:bg-error/90 transition-colors"
+                  >
+                    <XCircle className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <FileUploader
+                  endpoint="storyImageUploader"
+                  onUploadComplete={(urls) => updateField("imageUrl", urls[0])}
+                  onUploadError={(err) => setError("Upload failed: " + err.message)}
                 />
-              </div>
-              <p className="text-xs text-ink/50 mt-1">Leave empty for a default image.</p>
+              )}
             </div>
 
             {/* Consent */}
@@ -252,7 +263,7 @@ export default function SubmitStoryPage() {
                   required
                 />
                 <span className="text-sm text-ink/80">
-                  I confirm that this story is true and accurate to the best of my knowledge. 
+                  I confirm that this story is true and accurate to the best of my knowledge.
                   I consent to DHK LIFT reviewing and publishing it. *
                 </span>
               </label>
@@ -271,7 +282,7 @@ export default function SubmitStoryPage() {
               <div>
                 <p className="font-semibold text-navy text-sm">Your privacy is protected</p>
                 <p className="text-ink/70 text-xs mt-1">
-                  All stories are reviewed by our team before publishing. If you choose to publish anonymously, 
+                  All stories are reviewed by our team before publishing. If you choose to publish anonymously,
                   your name will never be shown publicly.
                 </p>
               </div>
