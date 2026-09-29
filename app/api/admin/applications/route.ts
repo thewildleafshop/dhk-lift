@@ -1,36 +1,17 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma"; 
+import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   try {
-    // 1. Database se Applications fetch karein (Prisma Schema ke mutabiq)
     const applications = await prisma.application.findMany({
       orderBy: { createdAt: "desc" },
       include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-        program: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-            category: true,
-          },
-        },
-        _count: {
-          select: {
-            documents: true,
-          },
-        },
+        user: { select: { id: true, name: true, email: true, phone: true, country: true } },
+        program: { select: { id: true, name: true, slug: true, category: true } },
+        documents: true, // Include documents
       },
     });
 
-    // 2. Data ko frontend ke format mein convert karein
     const formattedApplications = applications.map((app) => ({
       id: app.id,
       confirmationNo: app.confirmationNo,
@@ -39,18 +20,23 @@ export async function GET() {
       data: app.data, // JSON field as is bhej dein
       notes: app.notes,
       submittedAt: app.submittedAt ? app.submittedAt.toISOString() : null,
+      reviewedAt: app.reviewedAt ? app.reviewedAt.toISOString() : null,
       createdAt: app.createdAt.toISOString(),
       user: app.user,
       program: app.program,
-      documentCount: app._count.documents,
+      documents: app.documents.map((doc) => ({
+        id: doc.id,
+        fileName: doc.fileName,
+        fileUrl: doc.fileUrl,
+        fileType: doc.fileType,
+        fileSize: doc.fileSize,
+        createdAt: doc.createdAt.toISOString(),
+      })),
     }));
 
     return NextResponse.json(formattedApplications);
   } catch (error) {
     console.error("Error fetching applications:", error);
-    return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
