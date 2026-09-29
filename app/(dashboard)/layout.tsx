@@ -40,6 +40,7 @@ const getNavItems = (role: string) => {
       { href: "/dashboard/impact", label: "My Impact", icon: TrendingUp },
       { href: "/dashboard/benefits", label: "My Benefits", icon: Gift }, // ✅ ADDED
       { href: "/dashboard/saved", label: "Saved Items", icon: Bookmark },
+       { href: "/dashboard/patient", label: "Patient Assistance", icon: Stethoscope },
     ],
     APPLICANT: [
       { href: "/dashboard/applications", label: "My Applications", icon: FileText },
