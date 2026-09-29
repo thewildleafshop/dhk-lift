@@ -158,7 +158,8 @@ export default function GivingPage() {
       </section>
 
       {/* ================= CAUSES GRID ================= */}
-      <section className="max-w-container mx-auto px-6 py-16 md:py-24">
+      {/* ✅ id="causes" add kiya taake Start Giving button yahan scroll kare */}
+      <section id="causes" className="max-w-container mx-auto px-6 py-16 md:py-24">
         <div className="text-center mb-12">
           <h2 className="font-display text-3xl md:text-4xl font-bold text-navy">
             Choose Your Cause
@@ -300,6 +301,7 @@ export default function GivingPage() {
             communities, and creating a better world.
           </p>
           <div className="mt-8 flex flex-wrap gap-4 justify-center">
+            {/* ✅ href="#causes" kar diya taake Choose Your Cause section par scroll ho */}
             <Link 
               href="#causes" 
               className="btn-lift bg-gold text-ink font-semibold px-8 py-4 rounded-input hover:bg-gold/90 transition-colors shadow-lg flex items-center gap-2"
