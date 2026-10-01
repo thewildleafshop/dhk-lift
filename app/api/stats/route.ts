@@ -22,9 +22,7 @@ export async function GET() {
     });
 
     // 4. Total Equipment Delivered (Projects with status VERIFIED/COMPLETED)
-    const equipmentDelivered = await prisma.project.count({
-      where: { status: { in: ["VERIFIED", "COMPLETED"] } },
-    });
+    const equipmentDelivered = await prisma.equipment.count();
 
     return NextResponse.json({
       familiesHelped: familiesHelped || 10000,
