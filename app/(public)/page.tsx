@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Heart,
   HandHeart,
@@ -11,6 +11,7 @@ import {
   Globe,
   CheckCircle,
   Accessibility,
+  Loader2,
 } from "lucide-react";
 
 export default function HomePage() {
@@ -18,6 +19,65 @@ export default function HomePage() {
   const [newsletterStatus, setNewsletterStatus] = useState<
     "idle" | "loading" | "success" | "error"
   >("idle");
+
+  // ✅ Stats State (Database se aayega)
+  const [stats, setStats] = useState({
+    familiesHelped: 10000,
+    communitiesSupported: 50,
+    keyPrograms: 7,
+    equipmentDelivered: 3500,
+  });
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  // ✅ Featured Programs State
+  const [featuredPrograms, setFeaturedPrograms] = useState<any[]>([]);
+  const [programsLoading, setProgramsLoading] = useState(true);
+
+  // ✅ Featured Stories State
+  const [featuredStories, setFeaturedStories] = useState<any[]>([]);
+  const [storiesLoading, setStoriesLoading] = useState(true);
+
+  // ✅ Fetch Stats
+  useEffect(() => {
+    fetch("/api/stats")
+      .then((res) => res.json())
+      .then((data) => {
+        setStats(data);
+        setStatsLoading(false);
+      })
+      .catch((err) => {
+        console.error("Error fetching stats:", err);
+        setStatsLoading(false);
+      });
+  }, []);
+
+  // ✅ Fetch Featured Programs
+  useEffect(() => {
+    fetch("/api/programs")
+      .then((res) => res.json())
+      .then((data) => {
+        setFeaturedPrograms(data.slice(0, 4));
+        setProgramsLoading(false);
+      })
+      .catch((err) => {
+        console.error("Error fetching programs:", err);
+        setProgramsLoading(false);
+      });
+  }, []);
+
+  // ✅ Fetch Featured Stories
+  useEffect(() => {
+    fetch("/api/stories")
+      .then((res) => res.json())
+      .then((data) => {
+        setFeaturedStories(data.slice(0, 3));
+        setStoriesLoading(false);
+      })
+      .catch((err) => {
+        console.error("Error fetching stories:", err);
+        setStoriesLoading(false);
+      });
+  }, []);
 
   const handleNewsletterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,6 +105,18 @@ export default function HomePage() {
     }
   };
 
+  // Program images mapping
+  const programImages: Record<string, string> = {
+    "Food Security": "/images/programs/foodDonation.png",
+    "Education Support": "/images/programs/education.png",
+    "LIFT Health": "/images/programs/healthcare.png",
+    "Disaster Relief": "/images/programs/disasterRelief.png",
+    "LIFT Ability": "/images/programs/wheelchair.png",
+    "Children & Families": "/images/programs/familu.png",
+    "LIFT Community": "/images/programs/communityVolunteers.png",
+    "LIFT Protect": "/images/programs/educationChildren.png",
+  };
+
   return (
     <main className="min-h-screen bg-cloud">
       {/* ================= HERO SECTION ================= */}
@@ -62,7 +134,7 @@ export default function HomePage() {
               <span className="text-gradient-gold">Lasting Change.</span>
             </h1>
             <p className="text-base md:text-lg text-white/80 max-w-lg mx-auto lg:mx-0 leading-relaxed">
-              DHK LIFT is a humanitarian platform connecting kind hearts with real needs. 
+              DHK LIFT is a humanitarian platform connecting kind hearts with real needs.
               Your support empowers families, builds communities, and creates a better future.
             </p>
 
@@ -122,95 +194,42 @@ export default function HomePage() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="card-hover bg-white rounded-card shadow-sm overflow-hidden border border-gray-100">
-            <div className="overflow-hidden">
-              <img
-                src="/images/programs/foodDonation.png"
-                alt="Food Security"
-                className="w-full h-40 object-cover transition-transform duration-500 hover:scale-110"
-              />
-            </div>
-            <div className="p-5">
-              <h3 className="font-display font-bold text-navy text-lg">Food Security</h3>
-              <p className="text-ink/70 text-sm mt-2 line-clamp-2">
-                Providing nutritious meals to families in need.
-              </p>
-              <Link
-                href="/programs/food-security"
-                className="inline-flex items-center gap-1 text-gold font-semibold text-sm mt-4 hover:gap-2 transition-all"
-              >
-                Learn More <ChevronRight className="w-3 h-3" />
-              </Link>
-            </div>
+        {programsLoading ? (
+          <div className="flex justify-center items-center py-16">
+            <Loader2 className="w-8 h-8 text-navy animate-spin" />
           </div>
-
-          <div className="card-hover bg-white rounded-card shadow-sm overflow-hidden border border-gray-100">
-            <div className="overflow-hidden">
-              <img
-                src="/images/programs/education.png"
-                alt="Education Support"
-                className="w-full h-40 object-cover transition-transform duration-500 hover:scale-110"
-              />
-            </div>
-            <div className="p-5">
-              <h3 className="font-display font-bold text-navy text-lg">Education Support</h3>
-              <p className="text-ink/70 text-sm mt-2 line-clamp-2">
-                Helping children access quality education.
-              </p>
-              <Link
-                href="/programs/education"
-                className="inline-flex items-center gap-1 text-gold font-semibold text-sm mt-4 hover:gap-2 transition-all"
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {featuredPrograms.map((program) => (
+              <div
+                key={program.id}
+                className="card-hover bg-white rounded-card shadow-sm overflow-hidden border border-gray-100"
               >
-                Learn More <ChevronRight className="w-3 h-3" />
-              </Link>
-            </div>
+                <div className="overflow-hidden">
+                  <img
+                    src={programImages[program.name] || "/images/programs/foodDonation.png"}
+                    alt={program.name}
+                    className="w-full h-40 object-cover transition-transform duration-500 hover:scale-110"
+                  />
+                </div>
+                <div className="p-5">
+                  <h3 className="font-display font-bold text-navy text-lg">
+                    {program.name}
+                  </h3>
+                  <p className="text-ink/70 text-sm mt-2 line-clamp-2">
+                    {program.description}
+                  </p>
+                  <Link
+                    href={`/programs/${program.slug}`}
+                    className="inline-flex items-center gap-1 text-gold font-semibold text-sm mt-4 hover:gap-2 transition-all"
+                  >
+                    Learn More <ChevronRight className="w-3 h-3" />
+                  </Link>
+                </div>
+              </div>
+            ))}
           </div>
-
-          <div className="card-hover bg-white rounded-card shadow-sm overflow-hidden border border-gray-100">
-            <div className="overflow-hidden">
-              <img
-                src="/images/programs/healthcare.png"
-                alt="Healthcare Access"
-                className="w-full h-40 object-cover transition-transform duration-500 hover:scale-110"
-              />
-            </div>
-            <div className="p-5">
-              <h3 className="font-display font-bold text-navy text-lg">Healthcare Access</h3>
-              <p className="text-ink/70 text-sm mt-2 line-clamp-2">
-                Supporting better health and wellness.
-              </p>
-              <Link
-                href="/programs/healthcare"
-                className="inline-flex items-center gap-1 text-gold font-semibold text-sm mt-4 hover:gap-2 transition-all"
-              >
-                Learn More <ChevronRight className="w-3 h-3" />
-              </Link>
-            </div>
-          </div>
-
-          <div className="card-hover bg-white rounded-card shadow-sm overflow-hidden border border-gray-100">
-            <div className="overflow-hidden">
-              <img
-                src="/images/programs/disasterRelief.png"
-                alt="Disaster Relief"
-                className="w-full h-40 object-cover transition-transform duration-500 hover:scale-110"
-              />
-            </div>
-            <div className="p-5">
-              <h3 className="font-display font-bold text-navy text-lg">Disaster Relief</h3>
-              <p className="text-ink/70 text-sm mt-2 line-clamp-2">
-                Rapid response for crisis-affected communities.
-              </p>
-              <Link
-                href="/programs/disaster-relief"
-                className="inline-flex items-center gap-1 text-gold font-semibold text-sm mt-4 hover:gap-2 transition-all"
-              >
-                Learn More <ChevronRight className="w-3 h-3" />
-              </Link>
-            </div>
-          </div>
-        </div>
+        )}
 
         <div className="mt-8 text-center md:hidden">
           <Link
@@ -226,20 +245,32 @@ export default function HomePage() {
       {/* ================= IMPACT STATS SECTION ================= */}
       <section className="bg-white border-y border-gray-100">
         <div className="max-w-container mx-auto px-6 py-12 md:py-16">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-            <div className="animate-fade-in-up">
-              <p className="font-display text-4xl md:text-5xl font-bold text-navy">10,000+</p>
-              <p className="text-ink/70 mt-2">Families Helped</p>
+          {statsLoading ? (
+            <div className="flex justify-center items-center py-8">
+              <Loader2 className="w-8 h-8 text-navy animate-spin" />
             </div>
-            <div className="animate-fade-in-up delay-100">
-              <p className="font-display text-4xl md:text-5xl font-bold text-navy">50+</p>
-              <p className="text-ink/70 mt-2">Communities Supported</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+              <div className="animate-fade-in-up">
+                <p className="font-display text-4xl md:text-5xl font-bold text-navy">
+                  {stats.familiesHelped.toLocaleString()}+
+                </p>
+                <p className="text-ink/70 mt-2">Families Helped</p>
+              </div>
+              <div className="animate-fade-in-up delay-100">
+                <p className="font-display text-4xl md:text-5xl font-bold text-navy">
+                  {stats.communitiesSupported}+
+                </p>
+                <p className="text-ink/70 mt-2">Communities Supported</p>
+              </div>
+              <div className="animate-fade-in-up delay-200">
+                <p className="font-display text-4xl md:text-5xl font-bold text-navy">
+                  {stats.keyPrograms}
+                </p>
+                <p className="text-ink/70 mt-2">Key Programs</p>
+              </div>
             </div>
-            <div className="animate-fade-in-up delay-200">
-              <p className="font-display text-4xl md:text-5xl font-bold text-navy">7</p>
-              <p className="text-ink/70 mt-2">Key Programs</p>
-            </div>
-          </div>
+          )}
         </div>
       </section>
 
@@ -259,7 +290,7 @@ export default function HomePage() {
                 <span className="text-teal">Restores Independence.</span>
               </h2>
               <p className="text-ink/70 mt-4 leading-relaxed">
-                From wheelchairs to oxygen concentrators, we provide essential medical 
+                From wheelchairs to oxygen concentrators, we provide essential medical
                 equipment to those who need it most — completely free of cost.
               </p>
 
@@ -301,10 +332,10 @@ export default function HomePage() {
                 <div className="relative z-10">
                   <Accessibility className="w-10 h-10 text-gold mb-4" />
                   <h3 className="font-display text-2xl font-bold">
-                    3,500+ Equipment Delivered
+                    {stats.equipmentDelivered.toLocaleString()}+ Equipment Delivered
                   </h3>
                   <p className="text-white/70 mt-3 text-sm leading-relaxed">
-                    Across 40+ countries, we've provided life-changing equipment 
+                    Across 40+ countries, we've provided life-changing equipment
                     to people with disabilities and medical needs.
                   </p>
                   <div className="grid grid-cols-2 gap-4 mt-6 pt-6 border-t border-white/20">
@@ -352,88 +383,56 @@ export default function HomePage() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="card-hover bg-white rounded-card shadow-sm overflow-hidden border border-gray-100">
-            <div className="overflow-hidden">
-              <img
-                src="/images/programs/familu.png"
-                alt="Story 1"
-                className="w-full h-48 object-cover transition-transform duration-500 hover:scale-110"
-              />
-            </div>
-            <div className="p-5">
-              <span className="text-xs font-semibold text-teal bg-teal/10 px-3 py-1 rounded-full">
-                Education
-              </span>
-              <h3 className="font-display font-bold text-navy text-lg mt-3">
-                A New Beginning for Amina
-              </h3>
-              <p className="text-ink/70 text-sm mt-2 line-clamp-3">
-                After losing her home, Amina's children can finally go back to school thanks to your support.
-              </p>
-              <Link
-                href="/stories/a-new-beginning-for-amina"
-                className="inline-flex items-center gap-1 text-navy font-semibold text-sm mt-4 hover:text-gold transition-colors"
-              >
-                Read Story <ChevronRight className="w-4 h-4" />
-              </Link>
-            </div>
+        {storiesLoading ? (
+          <div className="flex justify-center items-center py-16">
+            <Loader2 className="w-8 h-8 text-navy animate-spin" />
           </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {featuredStories.map((story) => {
+              const categoryColors: Record<string, string> = {
+                Education: "text-teal bg-teal/10",
+                Healthcare: "text-purple bg-purple/10",
+                "Food Security": "text-gold bg-gold/10",
+                "Water & Sanitation": "text-info bg-info/10",
+                "Disability Support": "text-navy bg-navy/10",
+              };
+              const colorClass = categoryColors[story.category] || "text-teal bg-teal/10";
 
-          <div className="card-hover bg-white rounded-card shadow-sm overflow-hidden border border-gray-100">
-            <div className="overflow-hidden">
-              <img
-                src="/images/stories/volunteer.png"
-                alt="Story 2"
-                className="w-full h-48 object-cover transition-transform duration-500 hover:scale-110"
-              />
-            </div>
-            <div className="p-5">
-              <span className="text-xs font-semibold text-gold bg-gold/10 px-3 py-1 rounded-full">
-                Food Security
-              </span>
-              <h3 className="font-display font-bold text-navy text-lg mt-3">
-                Meals That Changed Everything
-              </h3>
-              <p className="text-ink/70 text-sm mt-2 line-clamp-3">
-                A community kitchen in Pakistan now serves 500 hot meals daily to families in need.
-              </p>
-              <Link
-                href="/stories/why-i-give-every-month"
-                className="inline-flex items-center gap-1 text-navy font-semibold text-sm mt-4 hover:text-gold transition-colors"
-              >
-                Read Story <ChevronRight className="w-4 h-4" />
-              </Link>
-            </div>
+              return (
+                <div
+                  key={story.id}
+                  className="card-hover bg-white rounded-card shadow-sm overflow-hidden border border-gray-100"
+                >
+                  <div className="overflow-hidden">
+                    <img
+                      src={story.imageUrl || "/images/stories/volunteer.png"}
+                      alt={story.title}
+                      className="w-full h-48 object-cover transition-transform duration-500 hover:scale-110"
+                    />
+                  </div>
+                  <div className="p-5">
+                    <span className={`text-xs font-semibold px-3 py-1 rounded-full ${colorClass}`}>
+                      {story.category}
+                    </span>
+                    <h3 className="font-display font-bold text-navy text-lg mt-3">
+                      {story.title}
+                    </h3>
+                    <p className="text-ink/70 text-sm mt-2 line-clamp-3">
+                      {story.excerpt || story.content?.slice(0, 100)}
+                    </p>
+                    <Link
+                      href={`/stories/${story.slug}`}
+                      className="inline-flex items-center gap-1 text-navy font-semibold text-sm mt-4 hover:text-gold transition-colors"
+                    >
+                      Read Story <ChevronRight className="w-4 h-4" />
+                    </Link>
+                  </div>
+                </div>
+              );
+            })}
           </div>
-
-          <div className="card-hover bg-white rounded-card shadow-sm overflow-hidden border border-gray-100">
-            <div className="overflow-hidden">
-              <img
-                src="/images/stories/doctorPatient.png"
-                alt="Story 3"
-                className="w-full h-48 object-cover transition-transform duration-500 hover:scale-110"
-              />
-            </div>
-            <div className="p-5">
-              <span className="text-xs font-semibold text-purple bg-purple/10 px-3 py-1 rounded-full">
-                Healthcare
-              </span>
-              <h3 className="font-display font-bold text-navy text-lg mt-3">
-                Healing Hands in Action
-              </h3>
-              <p className="text-ink/70 text-sm mt-2 line-clamp-3">
-                A mobile clinic provided free checkups to over 1,200 patients in remote villages.
-              </p>
-              <Link
-                href="/stories/healing-hands-a-mothers-journey"
-                className="inline-flex items-center gap-1 text-navy font-semibold text-sm mt-4 hover:text-gold transition-colors"
-              >
-                Read Story <ChevronRight className="w-4 h-4" />
-              </Link>
-            </div>
-          </div>
-        </div>
+        )}
 
         <div className="mt-8 text-center md:hidden">
           <Link
@@ -510,7 +509,9 @@ export default function HomePage() {
               </p>
               <div className="mt-6 grid grid-cols-2 gap-4">
                 <div className="bg-white rounded-card p-4 text-center shadow-sm">
-                  <p className="font-display text-2xl font-bold text-navy">25+</p>
+                  <p className="font-display text-2xl font-bold text-navy">
+                    {stats.communitiesSupported}+
+                  </p>
                   <p className="text-ink/60 text-xs mt-1">Countries</p>
                 </div>
                 <div className="bg-white rounded-card p-4 text-center shadow-sm">

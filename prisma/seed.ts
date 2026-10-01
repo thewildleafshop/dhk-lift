@@ -722,6 +722,23 @@ async function main() {
       create: setting,
     });
   }
+// ============ EQUIPMENT ============
+console.log("\n♿ Creating Equipment...\n");
+
+const equipmentData = [
+  { name: "Standard Wheelchair", category: "wheelchairs", categoryLabel: "Wheelchairs", description: "Durable manual wheelchair suitable for daily use. Adjustable armrests and footrests.", availability: "Available", imageUrl: "/images/programs/disasterRelief.png" },
+  { name: "Electric Wheelchair", category: "wheelchairs", categoryLabel: "Wheelchairs", description: "Motorized wheelchair with joystick control. Ideal for users with limited mobility.", availability: "Limited", imageUrl: "/images/programs/healthcare.png" },
+  { name: "Walking Frame / Walker", category: "mobility", categoryLabel: "Mobility Aids", description: "Sturdy walking frame for rehabilitation and elderly support. Foldable design.", availability: "Available", imageUrl: "/images/programs/communityVolunteers.png" },
+  { name: "Oxygen Concentrator", category: "respiratory", categoryLabel: "Respiratory", description: "Portable oxygen concentrator for patients with respiratory conditions.", availability: "Waitlist", imageUrl: "/images/programs/healthcare.png" },
+  { name: "Hospital Bed (Adjustable)", category: "home", categoryLabel: "Home Equipment", description: "Adjustable hospital bed for home care. Includes side rails and remote control.", availability: "Available", imageUrl: "/images/programs/disasterRelief.png" },
+  { name: "Prosthetic Leg (Below Knee)", category: "prosthetics", categoryLabel: "Prosthetics", description: "Custom-fitted prosthetic limb for below-knee amputees. Includes rehabilitation support.", availability: "Limited", imageUrl: "/images/programs/education.png" },
+];
+
+for (const item of equipmentData) {
+  await prisma.equipment.create({ data: item });
+}
+console.log(`   ✅ ${equipmentData.length} equipment created`);
+
   console.log(`   ✅ ${defaultSettings.length} default settings created`);
   console.log("\n🎉 Seed complete!\n");
   console.log("========================================");

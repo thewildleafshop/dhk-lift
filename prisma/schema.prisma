@@ -293,7 +293,19 @@ model Setting {
   @@index([key])
   @@index([category])
 }
+model Equipment {
+  id            String   @id @default(cuid())
+  name          String
+  category      String
+  categoryLabel String
+  description   String
+  availability  String   @default("Available")
+  imageUrl      String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
+  @@index([category])
+}
 enum Role {
   ADMIN
   MEMBER
@@ -375,3 +387,5 @@ enum StoryStatus {
   PUBLISHED
   REJECTED
 }
+
+

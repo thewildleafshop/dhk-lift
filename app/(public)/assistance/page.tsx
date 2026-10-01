@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Search,
@@ -18,89 +18,31 @@ import {
   Clock,
   MapPin,
   CheckCircle,
-  ArrowRight,
+  Loader2,
 } from "lucide-react";
 
-// 7 LIFT Programs for Assistance
-const programs = [
-  {
-    id: "lift-health",
-    name: "LIFT Health",
-    icon: Stethoscope,
-    description: "Medical care, disease funds, and healthcare access for patients in need.",
-    color: "text-teal",
-    bgColor: "bg-teal/10",
-    programHref: "/programs/lift-health",
-    applyHref: "/assistance/apply?program=lift-health",
-    assistanceTypes: ["Disease Funds", "Medical Equipment", "Treatment Support"],
-  },
-  {
-    id: "lift-protect",
-    name: "LIFT Protect",
-    icon: HeartHandshake,
-    description: "Confidential support for women and children affected by abuse and exploitation.",
-    color: "text-purple",
-    bgColor: "bg-purple/10",
-    programHref: "/programs/lift-protect",
-    applyHref: "/assistance/apply?program=lift-protect",
-    assistanceTypes: ["Safe Shelter", "Legal Aid", "Counseling"],
-  },
-  {
-    id: "lift-ability",
-    name: "LIFT Ability",
-    icon: Accessibility,
-    description: "Mobility aids, prosthetics, and medical equipment for people with disabilities.",
-    color: "text-navy",
-    bgColor: "bg-navy/10",
-    programHref: "/programs/lift-ability",
-    applyHref: "/equipment/request",
-    assistanceTypes: ["Wheelchairs", "Prosthetics", "Home Equipment"],
-  },
-  {
-    id: "lift-community",
-    name: "LIFT Community",
-    icon: Users,
-    description: "Community development projects and local partnership support.",
-    color: "text-gold",
-    bgColor: "bg-gold/10",
-    programHref: "/programs/lift-community",
-    applyHref: "/assistance/apply?program=lift-community",
-    assistanceTypes: ["Community Projects", "Volunteer Support", "Local Aid"],
-  },
-  {
-    id: "children-families",
-    name: "Children & Families",
-    icon: Home,
-    description: "Support for vulnerable children and families with food, shelter, and education.",
-    color: "text-purple",
-    bgColor: "bg-purple/10",
-    programHref: "/programs/children-families",
-    applyHref: "/assistance/apply?program=children-families",
-    assistanceTypes: ["Food Support", "Shelter Aid", "School Fees"],
-  },
-  {
-    id: "food-security",
-    name: "Food Security",
-    icon: Utensils,
-    description: "Nutritious meals and food packages for families facing hunger.",
-    color: "text-gold",
-    bgColor: "bg-gold/10",
-    programHref: "/programs/food-security",
-    applyHref: "/assistance/apply?program=food-security",
-    assistanceTypes: ["Emergency Food", "Community Kitchens", "Nutrition"],
-  },
-  {
-    id: "education-support",
-    name: "Education Support",
-    icon: BookOpen,
-    description: "School fees, supplies, and educational resources for children in need.",
-    color: "text-teal",
-    bgColor: "bg-teal/10",
-    programHref: "/programs/education-support",
-    applyHref: "/assistance/apply?program=education-support",
-    assistanceTypes: ["School Fees", "Books & Supplies", "Scholarships"],
-  },
-];
+// Icon mapping (database se icon nahi aata, isliye manually map karenge)
+const iconMap: Record<string, any> = {
+  "LIFT Health": Stethoscope,
+  "LIFT Protect": HeartHandshake,
+  "LIFT Ability": Accessibility,
+  "LIFT Community": Users,
+  "Children & Families": Home,
+  "Food Security": Utensils,
+  "Education Support": BookOpen,
+  "Disaster Relief": Home,
+};
+
+const colorMap: Record<string, { color: string; bgColor: string }> = {
+  "LIFT Health": { color: "text-teal", bgColor: "bg-teal/10" },
+  "LIFT Protect": { color: "text-purple", bgColor: "bg-purple/10" },
+  "LIFT Ability": { color: "text-navy", bgColor: "bg-navy/10" },
+  "LIFT Community": { color: "text-gold", bgColor: "bg-gold/10" },
+  "Children & Families": { color: "text-purple", bgColor: "bg-purple/10" },
+  "Food Security": { color: "text-gold", bgColor: "bg-gold/10" },
+  "Education Support": { color: "text-teal", bgColor: "bg-teal/10" },
+  "Disaster Relief": { color: "text-navy", bgColor: "bg-navy/10" },
+};
 
 // Quick search tags
 const quickTags = [
@@ -114,6 +56,32 @@ const quickTags = [
 export default function AssistancePage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
+  const [programs, setPrograms] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // ✅ Fetch programs from API
+  useEffect(() => {
+    fetch("/api/programs")
+      .then((res) => res.json())
+      .then((data) => {
+        const formatted = data.map((p: any) => ({
+          id: p.slug,
+          name: p.name,
+          icon: iconMap[p.name] || FileText,
+          description: p.description,
+          ...(colorMap[p.name] || { color: "text-navy", bgColor: "bg-navy/10" }),
+          programHref: `/programs/${p.slug}`,
+          applyHref: `/assistance/apply?program=${p.slug}`,
+          assistanceTypes: [p.category],
+        }));
+        setPrograms(formatted);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Error fetching programs:", err);
+        setLoading(false);
+      });
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -126,7 +94,6 @@ export default function AssistancePage() {
 
   return (
     <main className="min-h-screen bg-cloud">
-
       {/* ================= HERO SECTION ================= */}
       <section className="relative bg-navy text-white overflow-hidden">
         <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-gold/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
@@ -216,60 +183,62 @@ export default function AssistancePage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {programs.map((program) => {
-            const Icon = program.icon;
-            return (
-              <div
-                key={program.id}
-                className="card-hover bg-white rounded-card p-6 shadow-sm border border-gray-100 flex flex-col"
-              >
-                {/* Icon */}
-                <div className={`${program.bgColor} rounded-full p-4 w-fit mb-5`}>
-                  <Icon className={`w-8 h-8 ${program.color}`} />
-                </div>
+        {loading ? (
+          <div className="flex justify-center items-center py-20">
+            <Loader2 className="w-10 h-10 text-navy animate-spin" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {programs.map((program) => {
+              const Icon = program.icon;
+              return (
+                <div
+                  key={program.id}
+                  className="card-hover bg-white rounded-card p-6 shadow-sm border border-gray-100 flex flex-col"
+                >
+                  <div className={`${program.bgColor} rounded-full p-4 w-fit mb-5`}>
+                    <Icon className={`w-8 h-8 ${program.color}`} />
+                  </div>
 
-                {/* Content */}
-                <h3 className="font-display font-bold text-navy text-xl">
-                  {program.name}
-                </h3>
-                <p className="text-ink/70 text-sm mt-3 leading-relaxed flex-1">
-                  {program.description}
-                </p>
+                  <h3 className="font-display font-bold text-navy text-xl">
+                    {program.name}
+                  </h3>
+                  <p className="text-ink/70 text-sm mt-3 leading-relaxed flex-1">
+                    {program.description}
+                  </p>
 
-                {/* Assistance Types */}
-                <div className="flex flex-wrap gap-2 mt-4">
-                  {program.assistanceTypes.map((type) => (
-                    <span
-                      key={type}
-                      className="text-xs font-medium text-navy bg-navy/5 px-3 py-1 rounded-full"
+                  <div className="flex flex-wrap gap-2 mt-4">
+                    {program.assistanceTypes.map((type: string) => (
+                      <span
+                        key={type}
+                        className="text-xs font-medium text-navy bg-navy/5 px-3 py-1 rounded-full"
+                      >
+                        {type}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="mt-5 pt-5 border-t border-gray-100 flex flex-wrap gap-2">
+                    <Link
+                      href={program.applyHref}
+                      className="btn-lift flex-1 min-w-fit bg-gold text-ink font-semibold px-4 py-2.5 rounded-input hover:bg-gold/90 transition-colors flex items-center justify-center gap-1.5 text-sm"
                     >
-                      {type}
-                    </span>
-                  ))}
+                      <FileText className="w-4 h-4 shrink-0" />
+                      Apply Now
+                    </Link>
+                    <Link
+                      href={program.programHref}
+                      className="btn-lift flex-1 min-w-fit border-2 border-navy/20 text-navy font-semibold px-4 py-2.5 rounded-input hover:bg-navy/5 transition-colors flex items-center justify-center gap-1.5 text-sm"
+                    >
+                      Learn More
+                      <ChevronRight className="w-4 h-4 shrink-0" />
+                    </Link>
+                  </div>
                 </div>
-
-                {/* Action Buttons */}
-                <div className="mt-5 pt-5 border-t border-gray-100 flex flex-wrap gap-2">
-                  <Link
-                    href={program.applyHref}
-                    className="btn-lift flex-1 min-w-fit bg-gold text-ink font-semibold px-4 py-2.5 rounded-input hover:bg-gold/90 transition-colors flex items-center justify-center gap-1.5 text-sm"
-                  >
-                    <FileText className="w-4 h-4 shrink-0" />
-                    Apply Now
-                  </Link>
-                  <Link
-                    href={program.programHref}
-                    className="btn-lift flex-1 min-w-fit border-2 border-navy/20 text-navy font-semibold px-4 py-2.5 rounded-input hover:bg-navy/5 transition-colors flex items-center justify-center gap-1.5 text-sm"
-                  >
-                    Learn More
-                    <ChevronRight className="w-4 h-4 shrink-0" />
-                  </Link>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       {/* ================= HOW IT WORKS ================= */}
@@ -354,7 +323,6 @@ export default function AssistancePage() {
           </div>
         </div>
       </section>
-
     </main>
   );
 }
