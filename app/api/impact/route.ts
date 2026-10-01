@@ -13,7 +13,10 @@ export async function GET() {
 
     // 2. Lives Impacted (rough estimate from donations)
     const totalRaised = Number(donations._sum.totalAmount || 0);
-    const livesImpacted = Math.round(totalRaised * 20); // $1 = ~20 lives (rough)
+   // Lives Impacted (Approved Applications)
+const livesImpacted = await prisma.application.count({
+  where: { status: "APPROVED" },
+});
 
     // 3. Countries (unique from partners)
     const partners = await prisma.partner.findMany({
