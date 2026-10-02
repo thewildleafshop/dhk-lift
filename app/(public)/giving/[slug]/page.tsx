@@ -44,7 +44,7 @@ const causesData: Record<string, {
     image: "/images/programs/communityVolunteers.png",
     tagline: "Maximum Impact. Maximum Flexibility.",
     description: "Let us direct your donation to the most urgent needs across all programs.",
-    longDescription: "When you give to 'Where Needed Most', you allow DHK LIFT to respond quickly to emergencies, fill funding gaps, and direct resources to the areas of greatest need. This is the most powerful way to give — because it ensures your donation goes exactly where it's needed, when it's needed.",
+    longDescription: "When you give to 'Where Needed Most', you allow DHK LIFT to respond quickly to emergencies, fill funding gaps, and direct resources to the areas of greatest need.",
     raised: 45000,
     goal: 100000,
     donors: 342,
@@ -71,7 +71,7 @@ const causesData: Record<string, {
     image: "/images/programs/healthcare.png",
     tagline: "Healthcare for Everyone",
     description: "Provide medical care, disease funds, and healthcare access to those in need.",
-    longDescription: "LIFT Health provides access to quality healthcare and medical support for underserved communities. From disease funds to medical equipment, we ensure no one is left behind when it comes to their health. Your donation directly funds treatments, medications, and medical equipment for patients who cannot afford them.",
+    longDescription: "LIFT Health provides access to quality healthcare and medical support for underserved communities.",
     raised: 82000,
     goal: 150000,
     donors: 587,
@@ -98,7 +98,7 @@ const causesData: Record<string, {
     image: "/images/programs/familu.png",
     tagline: "Safety. Dignity. Hope.",
     description: "Support women and children affected by abuse, exploitation, and trafficking.",
-    longDescription: "LIFT Protect offers confidential support for women and children affected by abuse, exploitation, trafficking, and forced marriage. We work with trusted partners to provide safety, legal aid, and rehabilitation. Your donation helps provide safe shelter, counseling, and legal support for survivors.",
+    longDescription: "LIFT Protect offers confidential support for women and children affected by abuse, exploitation, trafficking, and forced marriage.",
     raised: 35000,
     goal: 80000,
     donors: 234,
@@ -125,7 +125,7 @@ const causesData: Record<string, {
     image: "/images/programs/disasterRelief.png",
     tagline: "Empowering Every Ability",
     description: "Provide wheelchairs, prosthetics, and medical equipment to those with disabilities.",
-    longDescription: "LIFT Ability provides medical equipment, mobility aids, and support for people with disabilities. We help individuals regain independence and live with dignity. Your donation directly funds wheelchairs, prosthetics, and home medical equipment for those who need them.",
+    longDescription: "LIFT Ability provides medical equipment, mobility aids, and support for people with disabilities.",
     raised: 28000,
     goal: 60000,
     donors: 189,
@@ -152,7 +152,7 @@ const causesData: Record<string, {
     image: "/images/programs/communityVolunteers.png",
     tagline: "Stronger Together",
     description: "Fund community projects and volunteer-led initiatives worldwide.",
-    longDescription: "LIFT Community builds stronger communities through local partnerships and volunteer programs. We empower grassroots initiatives to create lasting local change. Your donation funds community projects, volunteer training, and local infrastructure.",
+    longDescription: "LIFT Community builds stronger communities through local partnerships and volunteer programs.",
     raised: 15000,
     goal: 50000,
     donors: 98,
@@ -179,7 +179,7 @@ const causesData: Record<string, {
     image: "/images/stories/volunteer.png",
     tagline: "Building Brighter Futures",
     description: "Support vulnerable children and families with food, shelter, and education.",
-    longDescription: "Children & Families program supports vulnerable children and families with food, shelter, education, and essential needs. We focus on breaking the cycle of poverty. Your donation provides direct support to families in crisis — from emergency food to school fees.",
+    longDescription: "Children & Families program supports vulnerable children and families with food, shelter, education, and essential needs.",
     raised: 67000,
     goal: 120000,
     donors: 423,
@@ -206,7 +206,7 @@ const causesData: Record<string, {
     image: "/images/programs/foodDonation.png",
     tagline: "No One Goes Hungry",
     description: "Provide nutritious meals to families facing hunger and malnutrition.",
-    longDescription: "Food Security program provides nutritious meals to families facing hunger and malnutrition. We partner with local kitchens and food banks to deliver immediate relief. Your donation directly funds meals, food packages, and nutritional supplements for families in need.",
+    longDescription: "Food Security program provides nutritious meals to families facing hunger and malnutrition.",
     raised: 95000,
     goal: 150000,
     donors: 712,
@@ -233,7 +233,7 @@ const causesData: Record<string, {
     image: "/images/programs/education.png",
     tagline: "Knowledge Changes Everything",
     description: "Help children access quality education and learning resources.",
-    longDescription: "Education Support program helps children access quality education and learning resources. We believe education is the most powerful tool to break the cycle of poverty. Your donation funds school fees, supplies, and educational infrastructure for underserved communities.",
+    longDescription: "Education Support program helps children access quality education and learning resources.",
     raised: 42000,
     goal: 90000,
     donors: 267,
@@ -279,14 +279,11 @@ export default async function DonationDetailPage({
 
   return (
     <main className="min-h-screen bg-cloud">
-      
-      {/* ================= HERO SECTION ================= */}
+      {/* HERO SECTION */}
       <section className="relative bg-navy text-white overflow-hidden">
         <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-gold/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
         <div className="max-w-container mx-auto px-6 py-12 md:py-16 relative z-10">
-          
-          {/* Breadcrumb */}
-          <div className="flex items-center gap-2 text-white/60 text-sm mb-6 animate-fade-in">
+          <div className="flex items-center gap-2 text-white/60 text-sm mb-6">
             <Link href="/" className="hover:text-gold transition-colors">Home</Link>
             <ChevronRight className="w-4 h-4" />
             <Link href="/giving" className="hover:text-gold transition-colors">Giving</Link>
@@ -295,8 +292,7 @@ export default async function DonationDetailPage({
           </div>
 
           <div className="grid lg:grid-cols-2 gap-12 items-start">
-            {/* Left: Text */}
-            <div className="animate-slide-in-left">
+            <div>
               <div className={`${cause.bgColor} rounded-full p-4 w-fit mb-6`}>
                 <Icon className={`w-10 h-10 ${cause.color}`} />
               </div>
@@ -311,9 +307,8 @@ export default async function DonationDetailPage({
               </p>
             </div>
 
-            {/* Right: Donation Card */}
-            <div className="bg-white rounded-card shadow-2xl p-6 md:p-8 animate-fade-in delay-200" id="donate">
-              {/* Progress */}
+            {/* Donation Card */}
+            <div className="bg-white rounded-card shadow-2xl p-6 md:p-8" id="donate">
               <div className="mb-6">
                 <div className="flex justify-between items-baseline mb-2">
                   <span className="font-display text-3xl font-bold text-navy">
@@ -324,8 +319,8 @@ export default async function DonationDetailPage({
                   </span>
                 </div>
                 <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
-                  <div 
-                    className="bg-gradient-to-r from-gold to-gold/70 h-3 rounded-full transition-all duration-1000"
+                  <div
+                    className="bg-gradient-to-r from-gold to-gold/70 h-3 rounded-full"
                     style={{ width: `${progress}%` }}
                   ></div>
                 </div>
@@ -335,7 +330,6 @@ export default async function DonationDetailPage({
                 </div>
               </div>
 
-              {/* Quick Stats */}
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div className="bg-cloud rounded-card p-3 text-center">
                   <Clock className="w-5 h-5 text-navy mx-auto mb-1" />
@@ -349,35 +343,11 @@ export default async function DonationDetailPage({
                 </div>
               </div>
 
-              {/* Donation Form */}
               <div className="space-y-4">
                 <h3 className="font-display font-bold text-navy text-lg">
                   Make a Donation
                 </h3>
 
-                {/* Amount Buttons */}
-                <div className="grid grid-cols-3 gap-2">
-                  {["$25", "$50", "$100"].map((amount) => (
-                    <button
-                      key={amount}
-                      className="border-2 border-gray-200 text-navy font-semibold py-3 rounded-input hover:border-gold hover:bg-gold/5 transition-all"
-                    >
-                      {amount}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Custom Amount */}
-                <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-ink/60 font-semibold">$</span>
-                  <input
-                    type="number"
-                    placeholder="Enter custom amount"
-                    className="w-full pl-8 pr-4 py-3.5 rounded-input border border-gray-200 focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy text-ink"
-                  />
-                </div>
-
-                {/* Donate Button */}
                 <Link
                   href={`/giving/${cause.id}/checkout`}
                   className="btn-lift w-full bg-gold text-ink font-bold px-6 py-4 rounded-input hover:bg-gold/90 transition-colors flex items-center justify-center gap-2 shadow-lg"
@@ -386,7 +356,6 @@ export default async function DonationDetailPage({
                   Donate Now
                 </Link>
 
-                {/* Security Note */}
                 <div className="flex items-center justify-center gap-2 text-xs text-ink/50">
                   <Shield className="w-3 h-3" />
                   <span>Secure payment • 100% goes to cause</span>
@@ -397,7 +366,7 @@ export default async function DonationDetailPage({
         </div>
       </section>
 
-      {/* ================= IMPACT POINTS ================= */}
+      {/* IMPACT POINTS */}
       <section className="max-w-container mx-auto px-6 py-16 md:py-24">
         <div className="text-center mb-12">
           <h2 className="font-display text-3xl md:text-4xl font-bold text-navy">
@@ -410,8 +379,8 @@ export default async function DonationDetailPage({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {cause.impactPoints.map((point, i) => (
-            <div 
-              key={i} 
+            <div
+              key={i}
               className="bg-white rounded-card p-6 border border-gray-100 card-hover text-center"
             >
               <div className="bg-gold/10 rounded-full p-3 w-fit mx-auto mb-4">
@@ -424,7 +393,7 @@ export default async function DonationDetailPage({
         </div>
       </section>
 
-      {/* ================= WHY IT MATTERS ================= */}
+      {/* WHY IT MATTERS */}
       <section className="bg-white border-y border-gray-100">
         <div className="max-w-container mx-auto px-6 py-16 md:py-24">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -433,8 +402,7 @@ export default async function DonationDetailPage({
                 Why It Matters
               </h2>
               <p className="text-ink/70 mt-4 leading-relaxed">
-                Your support for {cause.name} creates measurable, lasting change. 
-                Here's why this cause deserves your attention.
+                Your support for {cause.name} creates measurable, lasting change.
               </p>
               <ul className="mt-6 space-y-4">
                 {cause.whyItMatters.map((item, i) => (
@@ -458,7 +426,7 @@ export default async function DonationDetailPage({
         </div>
       </section>
 
-      {/* ================= TRANSPARENCY ================= */}
+      {/* TRANSPARENCY */}
       <section className="max-w-container mx-auto px-6 py-16 md:py-24">
         <div className="bg-navy text-white rounded-card p-8 md:p-12">
           <div className="grid md:grid-cols-3 gap-8 text-center">
@@ -487,26 +455,26 @@ export default async function DonationDetailPage({
         </div>
       </section>
 
-      {/* ================= OTHER CAUSES CTA ================= */}
+      {/* CTA */}
       <section className="bg-purple text-white">
         <div className="max-w-container mx-auto px-6 py-16 md:py-20 text-center">
           <h2 className="font-display text-3xl md:text-4xl font-bold">
             Explore More Causes
           </h2>
           <p className="text-white/80 mt-4 max-w-2xl mx-auto leading-relaxed">
-            There are many ways to make a difference. Discover other programs that 
+            There are many ways to make a difference. Discover other programs that
             align with your values.
           </p>
           <div className="mt-8 flex flex-wrap gap-4 justify-center">
-            <Link 
-              href="/giving" 
+            <Link
+              href="/giving"
               className="btn-lift bg-gold text-ink font-semibold px-8 py-4 rounded-input hover:bg-gold/90 transition-colors shadow-lg flex items-center gap-2"
             >
               <Heart className="w-5 h-5" />
               View All Causes
             </Link>
-            <Link 
-              href="/membership" 
+            <Link
+              href="/membership"
               className="btn-lift border-2 border-white/30 text-white font-semibold px-8 py-4 rounded-input hover:bg-white/10 transition-colors flex items-center gap-2"
             >
               Become a Member
@@ -515,7 +483,6 @@ export default async function DonationDetailPage({
           </div>
         </div>
       </section>
-
     </main>
   );
 }

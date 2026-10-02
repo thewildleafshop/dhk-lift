@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   PaymentElement,
   useStripe,
   useElements,
 } from "@stripe/react-stripe-js";
 import { Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { useCart } from "@/context/CartContext";
 
 interface CheckoutFormProps {
   amount: number;
@@ -16,6 +18,8 @@ interface CheckoutFormProps {
 export default function CheckoutForm({ amount, onSuccess }: CheckoutFormProps) {
   const stripe = useStripe();
   const elements = useElements();
+  const router = useRouter();
+  const { clearCart } = useCart();
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -33,7 +37,7 @@ export default function CheckoutForm({ amount, onSuccess }: CheckoutFormProps) {
       const { error, paymentIntent } = await stripe.confirmPayment({
         elements,
         confirmParams: {
-          return_url: `${window.location.origin}/giving/success`,
+          return_url: `${window.location.origin}/giving/multi-success?amount=${amount}`
         },
         redirect: "if_required",
       });
@@ -42,7 +46,13 @@ export default function CheckoutForm({ amount, onSuccess }: CheckoutFormProps) {
         setErrorMessage(error.message || "Payment failed");
       } else if (paymentIntent && paymentIntent.status === "succeeded") {
         setIsSuccess(true);
+        clearCart(); // ✅ Cart clear karo
         if (onSuccess) onSuccess();
+        
+        // Redirect to success page
+        setTimeout(() => {
+          router.push(`/giving/success?amount=${amount}&type=multi`);
+        }, 1500);
       }
     } catch (err: any) {
       setErrorMessage(err.message || "An error occurred");
@@ -57,9 +67,11 @@ export default function CheckoutForm({ amount, onSuccess }: CheckoutFormProps) {
         <div className="bg-success/10 rounded-full p-4 w-fit mx-auto mb-4">
           <CheckCircle className="w-10 h-10 text-success" />
         </div>
-        <h3 className="font-display font-bold text-navy text-xl">Payment Successful!</h3>
+        <h3 className="font-display font-bold text-navy text-xl">
+          Payment Successful!
+        </h3>
         <p className="text-ink/70 mt-2 text-sm">
-          Thank you for your donation of ${amount}. Your receipt has been sent to your email.
+          Thank you for your donation of ${amount.toFixed(2)}. Redirecting...
         </p>
       </div>
     );
@@ -84,9 +96,11 @@ export default function CheckoutForm({ amount, onSuccess }: CheckoutFormProps) {
         className="btn-lift w-full bg-gold text-ink font-semibold px-8 py-4 rounded-input hover:bg-gold/90 transition-colors shadow-lg flex items-center justify-center gap-2 text-base disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isProcessing ? (
-          <><Loader2 className="w-5 h-5 animate-spin" /> Processing...</>
+          <>
+            <Loader2 className="w-5 h-5 animate-spin" /> Processing...
+          </>
         ) : (
-          <>Donate ${amount}</>
+          <>Donate ${amount.toFixed(2)}</>
         )}
       </button>
 

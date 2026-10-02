@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import FileUploader from "@/components/uploads/FileUploader";
 import {
   ChevronLeft,
   ChevronRight,
@@ -17,36 +18,24 @@ import {
   Image as ImageIcon,
   AlertCircle,
   Shield,
-  Building2,
 } from "lucide-react";
 
 // ============ TYPES ============
 type FormData = {
-  // Step 1: Basic Info
   title: string;
   category: string;
   location: string;
   beneficiaries: string;
-
-  // Step 2: Problem & Solution
   problem: string;
   solution: string;
   description: string;
-
-  // Step 3: Budget & Timeline
   goal: string;
   timeline: string;
   startDate: string;
   endDate: string;
-
-  // Step 4: Milestones
   milestones: { title: string; amount: string; description: string }[];
-
-  // Step 5: Media & Documents
-  coverImage: File | null;
-  supportingDocs: File | null;
-
-  // Step 6: Consent
+  coverImageUrl: string;       // ✅ URL (File nahi)
+  supportingDocsUrls: string[]; // ✅ URLs (File nahi)
   consent: boolean;
 };
 
@@ -77,6 +66,7 @@ export default function SubmitProjectPage() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<FormData>({
     title: "",
@@ -90,11 +80,9 @@ export default function SubmitProjectPage() {
     timeline: "",
     startDate: "",
     endDate: "",
-    milestones: [
-      { title: "", amount: "", description: "" },
-    ],
-    coverImage: null,
-    supportingDocs: null,
+    milestones: [{ title: "", amount: "", description: "" }],
+    coverImageUrl: "",
+    supportingDocsUrls: [],
     consent: false,
   });
 
@@ -138,18 +126,45 @@ export default function SubmitProjectPage() {
     setFormData({ ...formData, milestones: updated });
   };
 
+  // ✅ Real API Submit
   const handleSubmit = async () => {
     setIsSubmitting(true);
-    setTimeout(() => {
+    setError(null);
+
+    try {
+      const res = await fetch("/api/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: formData.title,
+          category: formData.category,
+          location: formData.location,
+          beneficiaries: parseInt(formData.beneficiaries) || 0,
+          problem: formData.problem,
+          solution: formData.solution,
+          description: formData.description,
+          goal: parseFloat(formData.goal) || 0,
+          timeline: formData.timeline,
+          startDate: formData.startDate,
+          endDate: formData.endDate,
+          milestones: formData.milestones,
+          coverImage: formData.coverImageUrl,
+          supportingDocs: formData.supportingDocsUrls,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Failed to submit project");
       router.push("/partner/projects/submit/success");
-    }, 2000);
+    } catch (err: any) {
+      setError(err.message || "Something went wrong");
+      setIsSubmitting(false);
+    }
   };
 
   const progress = (currentStep / steps.length) * 100;
 
   return (
     <main className="space-y-6">
-      
       {/* ================= BACK BUTTON ================= */}
       <Link
         href="/partner/projects"
@@ -490,7 +505,7 @@ export default function SubmitProjectPage() {
           </div>
         )}
 
-        {/* ================= STEP 5: MEDIA ================= */}
+        {/* ================= STEP 5: MEDIA (UPDATED) ================= */}
         {currentStep === 5 && (
           <div className="space-y-6">
             <div>
@@ -500,77 +515,42 @@ export default function SubmitProjectPage() {
               </p>
             </div>
 
-            <div className="space-y-4">
-              {/* Cover Image */}
+            <div className="space-y-6">
+              {/* Cover Image — ✅ FileUploader */}
               <div>
-                <label className="block text-sm font-semibold text-ink mb-2">Cover Image *</label>
-                <div className="border-2 border-dashed border-gray-200 rounded-input p-6 hover:border-gold transition-colors">
-                  <div className="flex flex-col items-center text-center">
-                    <div className="bg-navy/5 rounded-full p-4 mb-3">
-                      <ImageIcon className="w-8 h-8 text-navy" />
-                    </div>
-                    <p className="font-semibold text-navy text-sm">
-                      Upload a cover image
-                    </p>
-                    <p className="text-ink/60 text-xs mt-1">JPG, PNG • Max 5MB • 1200x600 recommended</p>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => updateField("coverImage", e.target.files?.[0] || null)}
-                      className="hidden"
-                      id="cover-image"
-                    />
-                    <label
-                      htmlFor="cover-image"
-                      className="btn-lift bg-navy text-white font-semibold px-6 py-2.5 rounded-input hover:bg-navy/90 transition-colors cursor-pointer text-sm mt-4"
-                    >
-                      Choose File
-                    </label>
-                  </div>
-                  {formData.coverImage && (
-                    <div className="flex items-center gap-2 mt-3 p-2 bg-success/5 rounded-input justify-center">
-                      <CheckCircle className="w-4 h-4 text-success" />
-                      <span className="text-xs text-success font-medium">{formData.coverImage.name}</span>
-                    </div>
-                  )}
-                </div>
+                <FileUploader
+                  endpoint="projectMilestoneUploader"
+                  label="Cover Image * (JPG, PNG • Max 8MB)"
+                  onUploadComplete={(urls) => {
+                    console.log("Cover image:", urls);
+                    updateField("coverImageUrl", urls[0]);
+                  }}
+                  onUploadError={(err: Error) => setError(err.message)}
+                />
               </div>
 
-              {/* Supporting Documents */}
+              {/* Supporting Documents — ✅ FileUploader */}
               <div>
-                <label className="block text-sm font-semibold text-ink mb-2">Supporting Documents (Optional)</label>
-                <div className="border-2 border-dashed border-gray-200 rounded-input p-6 hover:border-gold transition-colors">
-                  <div className="flex items-center gap-4">
-                    <div className="bg-navy/5 rounded-full p-3 shrink-0">
-                      <Upload className="w-6 h-6 text-navy" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-semibold text-navy text-sm">
-                        Upload supporting documents
-                      </p>
-                      <p className="text-ink/60 text-xs mt-1">PDF, DOCX • Max 10MB</p>
-                    </div>
-                    <input
-                      type="file"
-                      accept=".pdf,.doc,.docx"
-                      onChange={(e) => updateField("supportingDocs", e.target.files?.[0] || null)}
-                      className="hidden"
-                      id="supporting-docs"
-                    />
-                    <label
-                      htmlFor="supporting-docs"
-                      className="btn-lift bg-navy text-white font-semibold px-4 py-2 rounded-input hover:bg-navy/90 transition-colors cursor-pointer text-sm"
-                    >
-                      Upload
-                    </label>
-                  </div>
-                  {formData.supportingDocs && (
-                    <div className="flex items-center gap-2 mt-3 p-2 bg-success/5 rounded-input">
-                      <CheckCircle className="w-4 h-4 text-success" />
-                      <span className="text-xs text-success font-medium">{formData.supportingDocs.name}</span>
-                    </div>
-                  )}
-                </div>
+                <FileUploader
+                  endpoint="projectMilestoneUploader"
+                  label="Supporting Documents (PDF, DOCX, Images)"
+                  multiple={true}
+                  existingFiles={formData.supportingDocsUrls}
+                  onUploadComplete={(urls) => {
+                    console.log("Supporting docs:", urls);
+                    updateField("supportingDocsUrls", [
+                      ...formData.supportingDocsUrls,
+                      ...urls,
+                    ]);
+                  }}
+                  onRemove={(url: string) =>
+                    updateField(
+                      "supportingDocsUrls",
+                      formData.supportingDocsUrls.filter((u) => u !== url)
+                    )
+                  }
+                  onUploadError={(err: Error) => setError(err.message)}
+                />
               </div>
             </div>
           </div>
@@ -585,7 +565,6 @@ export default function SubmitProjectPage() {
             </div>
 
             <div className="space-y-4">
-              {/* Basic Info Summary */}
               <div className="bg-cloud rounded-card p-4">
                 <div className="flex items-center gap-2 mb-3">
                   <FileText className="w-4 h-4 text-navy" />
@@ -599,7 +578,6 @@ export default function SubmitProjectPage() {
                 </div>
               </div>
 
-              {/* Budget Summary */}
               <div className="bg-cloud rounded-card p-4">
                 <div className="flex items-center gap-2 mb-3">
                   <DollarSign className="w-4 h-4 text-navy" />
@@ -613,7 +591,6 @@ export default function SubmitProjectPage() {
                 </div>
               </div>
 
-              {/* Milestones Summary */}
               <div className="bg-cloud rounded-card p-4">
                 <div className="flex items-center gap-2 mb-3">
                   <CheckCircle className="w-4 h-4 text-navy" />
@@ -629,7 +606,18 @@ export default function SubmitProjectPage() {
                 </div>
               </div>
 
-              {/* Consent */}
+              {/* ✅ Media Summary */}
+              <div className="bg-cloud rounded-card p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <ImageIcon className="w-4 h-4 text-navy" />
+                  <h3 className="font-semibold text-navy text-sm">Media & Documents</h3>
+                </div>
+                <div className="space-y-2 text-sm">
+                  <div><span className="text-ink/60">Cover Image:</span> <span className="font-medium text-navy">{formData.coverImageUrl ? "✅ Uploaded" : "❌ Not uploaded"}</span></div>
+                  <div><span className="text-ink/60">Supporting Docs:</span> <span className="font-medium text-navy">{formData.supportingDocsUrls.length} file(s)</span></div>
+                </div>
+              </div>
+
               <div className="pt-4 border-t border-gray-100">
                 <label className="flex items-start gap-3 cursor-pointer">
                   <input
@@ -645,6 +633,13 @@ export default function SubmitProjectPage() {
                   </span>
                 </label>
               </div>
+
+              {/* Error */}
+              {error && (
+                <div className="p-4 bg-error/10 border border-error/20 rounded-input">
+                  <p className="text-error text-sm font-medium">{error}</p>
+                </div>
+              )}
 
               <div className="flex items-start gap-3 p-4 bg-gold/5 border border-gold/20 rounded-input">
                 <AlertCircle className="w-5 h-5 text-gold mt-0.5 shrink-0" />
@@ -703,7 +698,6 @@ export default function SubmitProjectPage() {
           )}
         </div>
       </div>
-
     </main>
   );
 }

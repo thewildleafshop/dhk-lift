@@ -196,3 +196,59 @@ svg.lucide {
 svg.lucide + svg.lucide {
   display: none !important;
 }
+
+/* ========================================== */
+/* UploadThing Button Custom Styling */
+/* ========================================== */
+
+.dhk-upload-button button,
+.dhk-upload-button [data-ut-element="button"],
+.dhk-upload-button [data-ut-element="button"]:focus {
+  background-color: #0B468F !important;
+  color: #ffffff !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  padding: 8px 18px !important;
+  border-radius: 8px !important;
+  border: none !important;
+  cursor: pointer !important;
+  width: auto !important;
+  min-width: auto !important;
+  transition: background-color 0.2s ease !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.dhk-upload-button button:hover,
+.dhk-upload-button [data-ut-element="button"]:hover {
+  background-color: #0a3d7a !important;
+}
+
+/* Hide the default "Choose File No file chosen" text */
+.dhk-upload-button [data-ut-element="allowed-content"],
+.dhk-upload-button [data-ut-element="allowed-content"] * {
+  color: #6B7280 !important;
+  font-size: 11px !important;
+  margin-top: 4px !important;
+  text-align: center !important;
+}
+
+/* Hide the label text that shows above the button */
+.dhk-upload-button label {
+  display: none !important;
+}
+
+/* Fix the button container */
+.dhk-upload-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.dhk-upload-button > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}

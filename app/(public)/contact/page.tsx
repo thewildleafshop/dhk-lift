@@ -17,6 +17,7 @@ import {
   Building2,
   Users,
   Headphones,
+  Loader2,
 } from "lucide-react";
 
 // ============ CONTACT INFO ============
@@ -109,27 +110,50 @@ export default function ContactPage() {
     subject: "",
     message: "",
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleChange = (field: string, value: string) => {
     setFormData({ ...formData, [field]: value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // ✅ REAL SUBMIT - Database mein save karega
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setSubmitted(true);
-      setTimeout(() => setSubmitted(false), 5000);
-      setFormData({ name: "", email: "", phone: "", category: "", subject: "", message: "" });
-    }, 1500);
+    setStatus("loading");
+    setErrorMessage("");
+
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setStatus("success");
+        setFormData({
+          name: "",
+          email: "",
+          phone: "",
+          category: "",
+          subject: "",
+          message: "",
+        });
+      } else {
+        setStatus("error");
+        setErrorMessage(data.error || "Something went wrong. Please try again.");
+      }
+    } catch (error) {
+      setStatus("error");
+      setErrorMessage("Network error. Please check your connection.");
+    }
   };
 
   return (
     <main className="min-h-screen bg-cloud">
-
       {/* ================= HERO SECTION ================= */}
       <section className="relative bg-navy text-white overflow-hidden">
         <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-gold/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
@@ -147,7 +171,7 @@ export default function ContactPage() {
             <span className="text-gradient-gold">Contact Us.</span>
           </h1>
           <p className="text-lg text-white/80 max-w-2xl mx-auto mt-6 leading-relaxed animate-fade-in-up delay-100">
-            Have a question, feedback, or need support? Our team is here to assist you. 
+            Have a question, feedback, or need support? Our team is here to assist you.
             Reach out and we'll get back to you within 24 hours.
           </p>
         </div>
@@ -168,8 +192,12 @@ export default function ContactPage() {
                 <div className={`${info.bgColor} rounded-full p-3 w-fit mb-4`}>
                   <Icon className={`w-6 h-6 ${info.color}`} />
                 </div>
-                <h3 className="font-display font-bold text-navy text-base">{info.title}</h3>
-                <p className="font-semibold text-navy text-sm mt-1 break-all">{info.value}</p>
+                <h3 className="font-display font-bold text-navy text-base">
+                  {info.title}
+                </h3>
+                <p className="font-semibold text-navy text-sm mt-1 break-all">
+                  {info.value}
+                </p>
                 <p className="text-ink/50 text-xs mt-1">{info.subtext}</p>
               </Link>
             );
@@ -180,7 +208,6 @@ export default function ContactPage() {
       {/* ================= CONTACT FORM & INFO ================= */}
       <section className="max-w-container mx-auto px-6 py-16 md:py-24">
         <div className="grid lg:grid-cols-3 gap-8">
-          
           {/* ================= FORM ================= */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-card p-6 md:p-10 shadow-sm border border-gray-100">
@@ -193,12 +220,14 @@ export default function ContactPage() {
                 </p>
               </div>
 
-              {/* Success Message */}
-              {submitted && (
+              {/* ✅ Success Message */}
+              {status === "success" && (
                 <div className="mb-6 p-4 bg-success/5 border border-success/20 rounded-input flex items-start gap-3 animate-fade-in">
                   <CheckCircle className="w-5 h-5 text-success mt-0.5 shrink-0" />
                   <div>
-                    <p className="text-success font-semibold text-sm">Message Sent Successfully!</p>
+                    <p className="text-success font-semibold text-sm">
+                      Message Sent Successfully!
+                    </p>
                     <p className="text-ink/70 text-xs mt-1">
                       Thank you for contacting us. We'll get back to you within 24 hours.
                     </p>
@@ -206,10 +235,23 @@ export default function ContactPage() {
                 </div>
               )}
 
+              {/* ✅ Error Message */}
+              {status === "error" && (
+                <div className="mb-6 p-4 bg-error/5 border border-error/20 rounded-input flex items-start gap-3 animate-fade-in">
+                  <Shield className="w-5 h-5 text-error mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-error font-semibold text-sm">Submission Failed</p>
+                    <p className="text-ink/70 text-xs mt-1">{errorMessage}</p>
+                  </div>
+                </div>
+              )}
+
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold text-ink mb-2">Full Name *</label>
+                    <label className="block text-sm font-semibold text-ink mb-2">
+                      Full Name *
+                    </label>
                     <input
                       type="text"
                       value={formData.name}
@@ -221,7 +263,9 @@ export default function ContactPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-ink mb-2">Email Address *</label>
+                    <label className="block text-sm font-semibold text-ink mb-2">
+                      Email Address *
+                    </label>
                     <input
                       type="email"
                       value={formData.email}
@@ -233,7 +277,9 @@ export default function ContactPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-ink mb-2">Phone Number</label>
+                    <label className="block text-sm font-semibold text-ink mb-2">
+                      Phone Number
+                    </label>
                     <input
                       type="tel"
                       value={formData.phone}
@@ -244,7 +290,9 @@ export default function ContactPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-ink mb-2">Category *</label>
+                    <label className="block text-sm font-semibold text-ink mb-2">
+                      Category *
+                    </label>
                     <select
                       value={formData.category}
                       onChange={(e) => handleChange("category", e.target.value)}
@@ -253,14 +301,18 @@ export default function ContactPage() {
                     >
                       <option value="">Select a category</option>
                       {inquiryCategories.map((cat, i) => (
-                        <option key={i} value={cat}>{cat}</option>
+                        <option key={i} value={cat}>
+                          {cat}
+                        </option>
                       ))}
                     </select>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-ink mb-2">Subject *</label>
+                  <label className="block text-sm font-semibold text-ink mb-2">
+                    Subject *
+                  </label>
                   <input
                     type="text"
                     value={formData.subject}
@@ -272,7 +324,9 @@ export default function ContactPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-ink mb-2">Message *</label>
+                  <label className="block text-sm font-semibold text-ink mb-2">
+                    Message *
+                  </label>
                   <textarea
                     value={formData.message}
                     onChange={(e) => handleChange("message", e.target.value)}
@@ -290,12 +344,12 @@ export default function ContactPage() {
                   </p>
                   <button
                     type="submit"
-                    disabled={isSubmitting}
+                    disabled={status === "loading"}
                     className="btn-lift bg-gold text-ink font-semibold px-8 py-3.5 rounded-input hover:bg-gold/90 transition-colors shadow-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isSubmitting ? (
+                    {status === "loading" ? (
                       <>
-                        <div className="w-5 h-5 border-2 border-ink/30 border-t-ink rounded-full animate-spin"></div>
+                        <Loader2 className="w-4 h-4 animate-spin" />
                         Sending...
                       </>
                     ) : (
@@ -312,7 +366,6 @@ export default function ContactPage() {
 
           {/* ================= SIDEBAR ================= */}
           <div className="space-y-6">
-            
             {/* Quick Help */}
             <div className="bg-white rounded-card p-6 shadow-sm border border-gray-100">
               <h3 className="font-display font-bold text-navy text-lg mb-4">
@@ -343,9 +396,7 @@ export default function ContactPage() {
               <div className="absolute top-0 right-0 w-[200px] h-[200px] bg-gold/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
               <div className="relative z-10">
                 <Clock className="w-8 h-8 text-gold mb-4" />
-                <h3 className="font-display font-bold text-lg mb-3">
-                  Support Hours
-                </h3>
+                <h3 className="font-display font-bold text-lg mb-3">Support Hours</h3>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-white/70">Mon - Fri</span>
@@ -371,9 +422,11 @@ export default function ContactPage() {
               <div className="flex items-start gap-3">
                 <Heart className="w-5 h-5 text-error mt-0.5 shrink-0" />
                 <div>
-                  <h3 className="font-semibold text-error text-sm">Urgent Assistance?</h3>
+                  <h3 className="font-semibold text-error text-sm">
+                    Urgent Assistance?
+                  </h3>
                   <p className="text-ink/70 text-xs mt-2 leading-relaxed">
-                    For urgent medical or protection emergencies, please use our 
+                    For urgent medical or protection emergencies, please use our
                     Assistance Finder for priority processing.
                   </p>
                   <Link
@@ -414,7 +467,9 @@ export default function ContactPage() {
                 <div className={`${office.bgColor} rounded-full p-3 w-fit mb-4`}>
                   <MapPin className={`w-6 h-6 ${office.color}`} />
                 </div>
-                <span className={`text-xs font-semibold ${office.color} ${office.bgColor} px-3 py-1 rounded-full`}>
+                <span
+                  className={`text-xs font-semibold ${office.color} ${office.bgColor} px-3 py-1 rounded-full`}
+                >
                   {office.type}
                 </span>
                 <h3 className="font-display font-bold text-navy text-xl mt-3">
@@ -440,7 +495,8 @@ export default function ContactPage() {
             Join Our Global Community
           </h2>
           <p className="text-white/80 mt-4 max-w-2xl mx-auto leading-relaxed">
-            Whether you want to give, receive help, or partner with us — there's a place for you at DHK LIFT.
+            Whether you want to give, receive help, or partner with us — there's a place
+            for you at DHK LIFT.
           </p>
           <div className="mt-8 flex flex-wrap gap-4 justify-center">
             <Link
@@ -460,7 +516,6 @@ export default function ContactPage() {
           </div>
         </div>
       </section>
-
     </main>
   );
 }

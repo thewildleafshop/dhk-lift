@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
-import { auth } from "@/lib/auth";
 
 export async function POST(request: Request) {
   try {
@@ -21,7 +20,7 @@ export async function POST(request: Request) {
       automatic_payment_methods: {
         enabled: true,
       },
-      metadata,
+      metadata, // ✅ Yeh already handle ho raha hai
     });
 
     return NextResponse.json({

@@ -1,22 +1,21 @@
 "use client";
 
+import FileUploader from "@/components/uploads/FileUploader";
 import Link from "next/link";
 import { useState } from "react";
 import {
   ChevronLeft,
-  Accessibility,
   User,
   Phone,
   Mail,
   MapPin,
-  Upload,
   CheckCircle,
-  AlertCircle,
   Shield,
   Send,
 } from "lucide-react";
 
 export default function EquipmentRequestPage() {
+  // ✅ State (component ke andar)
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -27,28 +26,45 @@ export default function EquipmentRequestPage() {
     equipmentType: "",
     condition: "",
     reason: "",
-    hasMedicalDoc: false,
-    medicalDoc: null as File | null,
   });
+
+  // ✅ File Upload State
+  const [documentUrls, setDocumentUrls] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleChange = (field: string, value: any) => {
     setFormData({ ...formData, [field]: value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // ✅ Real API Submit
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/equipment-requests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...formData,
+          documents: documentUrls,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Failed to submit request");
+
       setSubmitted(true);
-    }, 1500);
+    } catch (err: any) {
+      setError(err.message || "Something went wrong. Please try again.");
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <main className="min-h-screen bg-cloud">
-
       {/* ================= HERO ================= */}
       <section className="relative bg-navy text-white overflow-hidden">
         <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-gold/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
@@ -72,7 +88,6 @@ export default function EquipmentRequestPage() {
       {/* ================= FORM ================= */}
       <section className="max-w-container mx-auto px-6 py-12">
         <div className="max-w-3xl mx-auto">
-
           {submitted ? (
             /* ================= SUCCESS ================= */
             <div className="bg-white rounded-card p-8 md:p-12 shadow-sm border border-gray-100 text-center">
@@ -237,43 +252,20 @@ export default function EquipmentRequestPage() {
                   </div>
                 </div>
 
-                {/* Documents */}
+                {/* Documents - ✅ UPDATED */}
                 <div className="pt-4 border-t border-gray-100 space-y-4">
                   <h3 className="font-display font-bold text-navy text-base">
                     Supporting Documents
                   </h3>
-                  <div className="border-2 border-dashed border-gray-200 rounded-input p-6 hover:border-gold transition-colors">
-                    <div className="flex items-center gap-4">
-                      <div className="bg-navy/5 rounded-full p-3 shrink-0">
-                        <Upload className="w-6 h-6 text-navy" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-semibold text-navy text-sm">
-                          Medical Report / Prescription (Optional)
-                        </p>
-                        <p className="text-ink/60 text-xs mt-1">PDF, JPG, or PNG • Max 5MB</p>
-                      </div>
-                      <input
-                        type="file"
-                        accept=".pdf,.jpg,.jpeg,.png"
-                        onChange={(e) => handleChange("medicalDoc", e.target.files?.[0] || null)}
-                        className="hidden"
-                        id="medical-doc"
-                      />
-                      <label
-                        htmlFor="medical-doc"
-                        className="btn-lift bg-navy text-white font-semibold px-4 py-2 rounded-input hover:bg-navy/90 transition-colors cursor-pointer text-sm"
-                      >
-                        Upload
-                      </label>
-                    </div>
-                    {formData.medicalDoc && (
-                      <div className="flex items-center gap-2 mt-3 p-2 bg-success/5 rounded-input">
-                        <CheckCircle className="w-4 h-4 text-success" />
-                        <span className="text-xs text-success font-medium">{formData.medicalDoc.name}</span>
-                      </div>
-                    )}
-                  </div>
+                  <FileUploader
+                    endpoint="equipmentUploader"
+                    label="Medical Report / Prescription (PDF, JPG, PNG)"
+                    onUploadComplete={(urls) => {
+                      console.log("Uploaded URLs:", urls);
+                      setDocumentUrls(urls);
+                    }}
+                    onUploadError={(err: Error) => setError(err.message)}
+                  />
                 </div>
 
                 {/* Security Note */}
@@ -284,6 +276,13 @@ export default function EquipmentRequestPage() {
                     for the purpose of fulfilling your request.
                   </p>
                 </div>
+
+                {/* Error */}
+                {error && (
+                  <div className="p-4 bg-error/10 border border-error/20 rounded-input">
+                    <p className="text-error text-sm font-medium">{error}</p>
+                  </div>
+                )}
 
                 {/* Submit */}
                 <div className="flex justify-end pt-2">
@@ -308,10 +307,8 @@ export default function EquipmentRequestPage() {
               </form>
             </div>
           )}
-
         </div>
       </section>
-
     </main>
   );
 }

@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useState, useEffect } from "react";
 import {
   Globe,
   Users,
@@ -15,6 +18,8 @@ import {
   Pill,
   GraduationCap,
   DollarSign,
+  MapPin,
+  Loader2,
 } from "lucide-react";
 
 // ============ PARTNER TYPES ============
@@ -111,19 +116,35 @@ const benefits = [
   },
 ];
 
-// ============ CURRENT PARTNERS STATS ============
-const stats = [
-  { value: "80+", label: "Verified Partners" },
-  { value: "25+", label: "Countries" },
-  { value: "$5M+", label: "Distributed" },
-  { value: "500+", label: "Projects Completed" },
-];
-
 // ============ MAIN COMPONENT ============
 export default function PartnershipsPage() {
+  const [partners, setPartners] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // ✅ Fetch verified partners from database
+  useEffect(() => {
+    fetch("/api/partners")
+      .then((res) => res.json())
+      .then((data) => {
+        setPartners(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Error fetching partners:", err);
+        setLoading(false);
+      });
+  }, []);
+
+  // ✅ Dynamic stats
+  const stats = [
+    { value: `${partners.length || 80}+`, label: "Verified Partners" },
+    { value: "25+", label: "Countries" },
+    { value: "$5M+", label: "Distributed" },
+    { value: "500+", label: "Projects Completed" },
+  ];
+
   return (
     <main className="min-h-screen bg-cloud">
-
       {/* ================= HERO SECTION ================= */}
       <section className="relative bg-navy text-white overflow-hidden">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gold/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
@@ -141,7 +162,7 @@ export default function PartnershipsPage() {
             <span className="text-gradient-gold">Scale Your Impact.</span>
           </h1>
           <p className="text-lg text-white/80 max-w-2xl mx-auto mt-6 leading-relaxed animate-fade-in-up delay-100">
-            Join our global network of verified NGOs, healthcare providers, and community 
+            Join our global network of verified NGOs, healthcare providers, and community
             organizations working together to create lasting change.
           </p>
 
@@ -154,7 +175,7 @@ export default function PartnershipsPage() {
               Apply as Partner
             </Link>
             <Link
-              href="/partnerships/login"
+              href="/login"
               className="btn-lift border-2 border-white/30 text-white font-semibold px-8 py-4 rounded-input hover:bg-white/10 transition-colors flex items-center gap-2"
             >
               Partner Login
@@ -169,8 +190,14 @@ export default function PartnershipsPage() {
         <div className="max-w-container mx-auto px-6 py-12">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
             {stats.map((stat, i) => (
-              <div key={i} className="animate-fade-in-up" style={{ animationDelay: `${i * 0.1}s` }}>
-                <p className="font-display text-3xl md:text-4xl font-bold text-navy">{stat.value}</p>
+              <div
+                key={i}
+                className="animate-fade-in-up"
+                style={{ animationDelay: `${i * 0.1}s` }}
+              >
+                <p className="font-display text-3xl md:text-4xl font-bold text-navy">
+                  {stat.value}
+                </p>
                 <p className="text-ink/70 mt-1 text-sm">{stat.label}</p>
               </div>
             ))}
@@ -178,67 +205,120 @@ export default function PartnershipsPage() {
         </div>
       </section>
 
-      {/* ================= PARTNER TYPES ================= */}
+      {/* ================= OUR VERIFIED PARTNERS (DATABASE) ================= */}
       <section className="max-w-container mx-auto px-6 py-16 md:py-24">
         <div className="text-center mb-12">
           <h2 className="font-display text-3xl md:text-4xl font-bold text-navy">
-            Who Can Partner
+            Our Verified Partners
           </h2>
           <p className="text-ink/70 mt-3 max-w-2xl mx-auto">
-            We work with a diverse network of organizations across healthcare, education, 
-            and community development.
+            Meet the organizations we trust to deliver aid where it's needed most.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {partnerTypes.map((type, i) => {
-            const Icon = type.icon;
-            return (
+        {loading ? (
+          <div className="flex justify-center items-center py-20">
+            <Loader2 className="w-10 h-10 text-navy animate-spin" />
+          </div>
+        ) : partners.length === 0 ? (
+          <div className="bg-white rounded-card p-12 text-center border border-gray-100">
+            <Building2 className="w-12 h-12 text-ink/30 mx-auto mb-4" />
+            <h3 className="font-display text-xl font-bold text-navy">
+              No Verified Partners Yet
+            </h3>
+            <p className="text-ink/60 mt-2">
+              Be the first to join our global network.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {partners.map((partner) => (
               <div
-                key={i}
-                className="card-hover bg-white rounded-card p-6 border border-gray-100 text-center"
+                key={partner.id}
+                className="card-hover bg-white rounded-card p-6 shadow-sm border border-gray-100 flex flex-col"
               >
-                <div className={`${type.bgColor} rounded-full p-4 w-fit mx-auto mb-4`}>
-                  <Icon className={`w-7 h-7 ${type.color}`} />
+                <div className="flex items-start justify-between mb-4">
+                  <div className="bg-navy/10 rounded-full p-3">
+                    <Building2 className="w-7 h-7 text-navy" />
+                  </div>
+                  <span
+                    className={`text-xs font-semibold px-3 py-1 rounded-full ${
+                      partner.status === "TRUSTED"
+                        ? "text-purple bg-purple/10"
+                        : "text-success bg-success/10"
+                    }`}
+                  >
+                    {partner.status === "TRUSTED" ? "Trusted" : "Verified"}
+                  </span>
                 </div>
-                <h3 className="font-display font-bold text-navy text-base">{type.title}</h3>
-                <p className="text-ink/70 text-sm mt-2 leading-relaxed">{type.description}</p>
+
+                <h3 className="font-display font-bold text-navy text-lg">
+                  {partner.orgName}
+                </h3>
+                <p className="text-ink/50 text-xs mt-1">{partner.orgType}</p>
+
+                <div className="flex items-center gap-1 text-xs text-ink/60 mt-3">
+                  <MapPin className="w-3 h-3" />
+                  {partner.country}
+                </div>
+
+                <p className="text-ink/70 text-sm mt-3 leading-relaxed line-clamp-3 flex-1">
+                  {partner.mission || "Working to create lasting change in communities."}
+                </p>
+
+                <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
+                  <span className="text-xs text-ink/50">
+                    {partner.projectCount} project
+                    {partner.projectCount !== 1 ? "s" : ""}
+                  </span>
+                  {partner.website && (
+                    <a
+                      href={partner.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-gold font-semibold text-xs hover:text-gold/80 transition-colors flex items-center gap-1"
+                    >
+                      Visit Website
+                      <ChevronRight className="w-3 h-3" />
+                    </a>
+                  )}
+                </div>
               </div>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        )}
       </section>
 
-      {/* ================= VERIFICATION WORKFLOW ================= */}
+      {/* ================= PARTNER TYPES ================= */}
       <section className="bg-white border-y border-gray-100">
         <div className="max-w-container mx-auto px-6 py-16 md:py-24">
           <div className="text-center mb-12">
             <h2 className="font-display text-3xl md:text-4xl font-bold text-navy">
-              Partner Verification Process
+              Who Can Partner
             </h2>
             <p className="text-ink/70 mt-3 max-w-2xl mx-auto">
-              We verify every partner to build trust and ensure transparency.
+              We work with a diverse network of organizations across healthcare, education,
+              and community development.
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {verificationSteps.map((item, i) => {
-              const Icon = item.icon;
+            {partnerTypes.map((type, i) => {
+              const Icon = type.icon;
               return (
-                <div key={i} className="relative">
-                  <div className="bg-cloud rounded-card p-6 border border-gray-100 text-center h-full">
-                    <div className="bg-navy text-white font-display font-bold text-xl w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
-                      {item.step}
-                    </div>
-                    <Icon className="w-7 h-7 text-gold mx-auto mb-3" />
-                    <h3 className="font-display font-bold text-navy text-base">{item.title}</h3>
-                    <p className="text-ink/70 text-sm mt-2 leading-relaxed">{item.description}</p>
+                <div
+                  key={i}
+                  className="card-hover bg-cloud rounded-card p-6 border border-gray-100 text-center"
+                >
+                  <div className={`${type.bgColor} rounded-full p-4 w-fit mx-auto mb-4`}>
+                    <Icon className={`w-7 h-7 ${type.color}`} />
                   </div>
-                  {i < verificationSteps.length - 1 && (
-                    <div className="hidden lg:block absolute top-1/2 -right-3 z-10">
-                      <ChevronRight className="w-6 h-6 text-gold" />
-                    </div>
-                  )}
+                  <h3 className="font-display font-bold text-navy text-base">
+                    {type.title}
+                  </h3>
+                  <p className="text-ink/70 text-sm mt-2 leading-relaxed">
+                    {type.description}
+                  </p>
                 </div>
               );
             })}
@@ -246,37 +326,82 @@ export default function PartnershipsPage() {
         </div>
       </section>
 
-      {/* ================= BENEFITS ================= */}
+      {/* ================= VERIFICATION WORKFLOW ================= */}
       <section className="max-w-container mx-auto px-6 py-16 md:py-24">
         <div className="text-center mb-12">
           <h2 className="font-display text-3xl md:text-4xl font-bold text-navy">
-            Partner Benefits
+            Partner Verification Process
           </h2>
           <p className="text-ink/70 mt-3 max-w-2xl mx-auto">
-            As a verified partner, you gain access to funding, resources, and a global network.
+            We verify every partner to build trust and ensure transparency.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {benefits.map((benefit, i) => {
-            const Icon = benefit.icon;
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {verificationSteps.map((item, i) => {
+            const Icon = item.icon;
             return (
-              <div
-                key={i}
-                className="card-hover bg-white rounded-card p-6 border border-gray-100"
-              >
-                <div className="flex items-start gap-4">
-                  <div className="bg-gold/10 rounded-full p-3 shrink-0">
-                    <Icon className="w-6 h-6 text-gold" />
+              <div key={i} className="relative">
+                <div className="bg-white rounded-card p-6 border border-gray-100 text-center h-full">
+                  <div className="bg-navy text-white font-display font-bold text-xl w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
+                    {item.step}
                   </div>
-                  <div>
-                    <h3 className="font-display font-bold text-navy text-base">{benefit.title}</h3>
-                    <p className="text-ink/70 text-sm mt-2 leading-relaxed">{benefit.description}</p>
-                  </div>
+                  <Icon className="w-7 h-7 text-gold mx-auto mb-3" />
+                  <h3 className="font-display font-bold text-navy text-base">
+                    {item.title}
+                  </h3>
+                  <p className="text-ink/70 text-sm mt-2 leading-relaxed">
+                    {item.description}
+                  </p>
                 </div>
+                {i < verificationSteps.length - 1 && (
+                  <div className="hidden lg:block absolute top-1/2 -right-3 z-10">
+                    <ChevronRight className="w-6 h-6 text-gold" />
+                  </div>
+                )}
               </div>
             );
           })}
+        </div>
+      </section>
+
+      {/* ================= BENEFITS ================= */}
+      <section className="bg-white border-y border-gray-100">
+        <div className="max-w-container mx-auto px-6 py-16 md:py-24">
+          <div className="text-center mb-12">
+            <h2 className="font-display text-3xl md:text-4xl font-bold text-navy">
+              Partner Benefits
+            </h2>
+            <p className="text-ink/70 mt-3 max-w-2xl mx-auto">
+              As a verified partner, you gain access to funding, resources, and a global network.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {benefits.map((benefit, i) => {
+              const Icon = benefit.icon;
+              return (
+                <div
+                  key={i}
+                  className="card-hover bg-cloud rounded-card p-6 border border-gray-100"
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="bg-gold/10 rounded-full p-3 shrink-0">
+                      <Icon className="w-6 h-6 text-gold" />
+                    </div>
+                    <div>
+                      <h3 className="font-display font-bold text-navy text-base">
+                        {benefit.title}
+                      </h3>
+                      <p className="text-ink/70 text-sm mt-2 leading-relaxed">
+                        {benefit.description}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </section>
 
@@ -292,7 +417,7 @@ export default function PartnershipsPage() {
                 Ready to Partner With DHK LIFT?
               </h2>
               <p className="text-white/80 mt-4 leading-relaxed">
-                Submit your application today and join our global network of change-makers. 
+                Submit your application today and join our global network of change-makers.
                 Our team will review your application within 5-7 business days.
               </p>
               <div className="mt-8 flex flex-wrap gap-4">
@@ -334,7 +459,6 @@ export default function PartnershipsPage() {
           </div>
         </div>
       </section>
-
     </main>
   );
 }

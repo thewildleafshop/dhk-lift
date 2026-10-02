@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import {
   ChevronLeft,
   BookOpen,
@@ -14,6 +15,7 @@ import {
   Shield,
   Lock,
   XCircle,
+  LogIn,
 } from "lucide-react";
 import FileUploader from "@/components/uploads/FileUploader";
 
@@ -44,6 +46,7 @@ type FormData = {
 
 export default function SubmitStoryPage() {
   const router = useRouter();
+  const { data: session, status: sessionStatus } = useSession();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -94,11 +97,65 @@ export default function SubmitStoryPage() {
     }
   };
 
-  const isValid = formData.title && formData.content && formData.category && formData.consent;
+  const isValid =
+    formData.title && formData.content && formData.category && formData.consent;
 
+  // ✅ Loading State
+  if (sessionStatus === "loading") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-cloud">
+        <Loader2 className="w-10 h-10 text-navy animate-spin" />
+      </div>
+    );
+  }
+
+  // ✅ Login Required State
+  if (sessionStatus === "unauthenticated") {
+    return (
+      <main className="min-h-screen bg-cloud">
+        <section className="relative bg-navy text-white overflow-hidden">
+          <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-gold/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+          <div className="max-w-container mx-auto px-6 py-16 md:py-24 relative z-10 text-center">
+            <div className="bg-gold/20 rounded-full p-4 w-fit mx-auto mb-6">
+              <Lock className="w-10 h-10 text-gold" />
+            </div>
+            <h1 className="font-display text-3xl md:text-4xl font-bold">
+              Login Required
+            </h1>
+            <p className="text-white/80 mt-4 max-w-md mx-auto">
+              You need to be logged in to submit a story. Please login or create an
+              account to continue.
+            </p>
+            <div className="flex flex-wrap gap-4 justify-center mt-8">
+              <Link
+                href="/login?callbackUrl=/stories/submit"
+                className="btn-lift bg-gold text-ink font-semibold px-8 py-4 rounded-input hover:bg-gold/90 transition-colors shadow-lg flex items-center gap-2"
+              >
+                <LogIn className="w-5 h-5" />
+                Login
+              </Link>
+              <Link
+                href="/register"
+                className="btn-lift border-2 border-white/30 text-white font-semibold px-8 py-4 rounded-input hover:bg-white/10 transition-colors flex items-center gap-2"
+              >
+                Create Account
+              </Link>
+            </div>
+            <p className="text-white/50 text-sm mt-6">
+              Already have an account?{" "}
+              <Link href="/login" className="text-gold hover:underline">
+                Login here
+              </Link>
+            </p>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
+  // ✅ Main Form
   return (
     <main className="min-h-screen bg-cloud">
-
       {/* HERO */}
       <section className="relative bg-navy text-white overflow-hidden">
         <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-gold/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
@@ -131,8 +188,10 @@ export default function SubmitStoryPage() {
       {/* FORM */}
       <section className="max-w-container mx-auto px-6 py-12">
         <div className="max-w-3xl mx-auto">
-          <form onSubmit={handleSubmit} className="bg-white rounded-card p-6 md:p-10 shadow-sm border border-gray-100 space-y-6">
-
+          <form
+            onSubmit={handleSubmit}
+            className="bg-white rounded-card p-6 md:p-10 shadow-sm border border-gray-100 space-y-6"
+          >
             {/* Title */}
             <div>
               <label className="block text-sm font-semibold text-ink mb-2">
@@ -163,7 +222,9 @@ export default function SubmitStoryPage() {
                 >
                   <option value="">Select category</option>
                   {categories.map((cat) => (
-                    <option key={cat} value={cat}>{cat}</option>
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -181,7 +242,9 @@ export default function SubmitStoryPage() {
                 placeholder="A one-line summary of your story"
                 className="w-full px-4 py-3 rounded-input border border-gray-200 focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy text-sm"
               />
-              <p className="text-xs text-ink/50 mt-1">Max 150 characters. If empty, we'll use the first 150 characters of your story.</p>
+              <p className="text-xs text-ink/50 mt-1">
+                Max 150 characters. If empty, we'll use the first 150 characters of your story.
+              </p>
             </div>
 
             {/* Content */}
@@ -219,7 +282,9 @@ export default function SubmitStoryPage() {
                   onChange={(e) => updateField("isAnonymous", e.target.checked)}
                   className="w-4 h-4 accent-gold"
                 />
-                <span className="text-sm text-ink/70">Publish my story anonymously</span>
+                <span className="text-sm text-ink/70">
+                  Publish my story anonymously
+                </span>
               </label>
             </div>
 
@@ -245,7 +310,7 @@ export default function SubmitStoryPage() {
                 </div>
               ) : (
                 <FileUploader
-                  endpoint="storyImageUploader"
+                  endpoint="storyUploader"
                   onUploadComplete={(urls) => updateField("imageUrl", urls[0])}
                   onUploadError={(err) => setError("Upload failed: " + err.message)}
                 />
@@ -263,8 +328,8 @@ export default function SubmitStoryPage() {
                   required
                 />
                 <span className="text-sm text-ink/80">
-                  I confirm that this story is true and accurate to the best of my knowledge.
-                  I consent to DHK LIFT reviewing and publishing it. *
+                  I confirm that this story is true and accurate to the best of my
+                  knowledge. I consent to DHK LIFT reviewing and publishing it. *
                 </span>
               </label>
             </div>
@@ -280,10 +345,12 @@ export default function SubmitStoryPage() {
             <div className="flex items-start gap-3 p-4 bg-info/5 border border-info/20 rounded-input">
               <Shield className="w-5 h-5 text-info mt-0.5 shrink-0" />
               <div>
-                <p className="font-semibold text-navy text-sm">Your privacy is protected</p>
+                <p className="font-semibold text-navy text-sm">
+                  Your privacy is protected
+                </p>
                 <p className="text-ink/70 text-xs mt-1">
-                  All stories are reviewed by our team before publishing. If you choose to publish anonymously,
-                  your name will never be shown publicly.
+                  All stories are reviewed by our team before publishing. If you choose
+                  to publish anonymously, your name will never be shown publicly.
                 </p>
               </div>
             </div>
@@ -302,9 +369,13 @@ export default function SubmitStoryPage() {
                 className="btn-lift bg-gold text-ink font-semibold px-8 py-3.5 rounded-input hover:bg-gold/90 transition-colors shadow-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? (
-                  <><Loader2 className="w-5 h-5 animate-spin" /> Submitting...</>
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" /> Submitting...
+                  </>
                 ) : (
-                  <><Send className="w-5 h-5" /> Submit Story</>
+                  <>
+                    <Send className="w-5 h-5" /> Submit Story
+                  </>
                 )}
               </button>
             </div>
@@ -322,7 +393,6 @@ export default function SubmitStoryPage() {
           </div>
         </div>
       </section>
-
     </main>
   );
 }

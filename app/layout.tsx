@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
+import { Providers } from "./providers";
 import { Inter, Manrope } from "next/font/google";
-import { SessionProvider } from "next-auth/react";
 import "./globals.css";
 
 const inter = Inter({
@@ -29,7 +29,7 @@ export default function RootLayout({
   return (
     <html lang="en" data-scroll-behavior="smooth">
       <body className={`${inter.variable} ${manrope.variable} antialiased`}>
-        <SessionProvider>{children}</SessionProvider>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

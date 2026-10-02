@@ -155,6 +155,7 @@ model DonationAllocation {
   @@index([donationId])
 }
 
+// ✅ SIRF EK PARTNER MODEL (yeh wala rakhein)
 model Partner {
   id         String        @id @default(cuid())
   userId     String        @unique
@@ -169,29 +170,42 @@ model Partner {
   updatedAt  DateTime      @updatedAt
   user       User          @relation(fields: [userId], references: [id])
   projects   Project[]
-
+  claims  Claim[]  // ✅ Yeh add karein
+  
+  // ✅ Yeh line zaroori hai
+  verificationDocs  VerificationDocument[]
+  
   @@index([status])
 }
 
 model Project {
-  id           String               @id @default(cuid())
-  partnerId    String
-  title        String
-  slug         String               @unique
-  description  String
-  location     String
-  goalAmount   Decimal              @db.Decimal(12, 2)
-  raisedAmount Decimal              @default(0) @db.Decimal(12, 2)
-  status       ProjectStatus        @default(DRAFT)
-  startDate    DateTime?
-  endDate      DateTime?
-  createdAt    DateTime             @default(now())
-  updatedAt    DateTime             @updatedAt
-  allocations  DonationAllocation[]
-  evidence     Evidence[]
-  milestones   Milestone[]
-  partner      Partner              @relation(fields: [partnerId], references: [id])
-  stories      Story[]
+  id              String               @id @default(cuid())
+  partnerId       String
+  title           String
+  slug            String               @unique
+  description     String
+  location        String
+  goalAmount      Decimal              @db.Decimal(12, 2)
+  raisedAmount    Decimal              @default(0) @db.Decimal(12, 2)
+  status          ProjectStatus        @default(DRAFT)
+  startDate       DateTime?
+  endDate         DateTime?
+  
+  category        String?
+  beneficiaries   Int?
+  problem         String?
+  solution        String?
+  timeline        String?
+  coverImage      String?
+  supportingDocs  String[]
+  
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  allocations     DonationAllocation[]
+  evidence        Evidence[]
+  milestones      Milestone[]
+  partner         Partner              @relation(fields: [partnerId], references: [id])
+  stories         Story[]
 
   @@index([slug])
   @@index([status])
@@ -205,6 +219,7 @@ model Milestone {
   status      String     @default("PENDING")
   dueDate     DateTime?
   completedAt DateTime?
+  amount      Decimal?   @db.Decimal(12, 2)
   createdAt   DateTime   @default(now())
   evidence    Evidence[]
   project     Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
@@ -293,6 +308,7 @@ model Setting {
   @@index([key])
   @@index([category])
 }
+
 model Equipment {
   id            String   @id @default(cuid())
   name          String
@@ -305,6 +321,76 @@ model Equipment {
   updatedAt     DateTime @updatedAt
 
   @@index([category])
+}
+
+model EquipmentRequest {
+  id            String   @id @default(cuid())
+  userId        String?
+  name          String
+  email         String
+  phone         String
+  address       String
+  city          String
+  country       String
+  equipmentType String
+  condition     String?
+  reason        String
+  documents     String[]
+  status        String   @default("SUBMITTED")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model VerificationDocument {
+  id          String   @id @default(cuid())
+  partnerId   String
+  docId       String
+  name        String
+  fileUrl     String?
+  status      String   @default("PENDING")
+  uploadedAt  DateTime?
+  verifiedAt  DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  partner     Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  
+  @@unique([partnerId, docId])
+}
+model Claim {
+  id              String        @id @default(cuid())
+  partnerId       String
+  patientName     String
+  patientId       String?
+  providerName    String
+  serviceDate     DateTime
+  serviceType     String
+  amount          Decimal       @db.Decimal(12, 2)
+  currency        String        @default("USD")
+  description     String
+  documents       String[]
+  status          ClaimStatus   @default(SUBMITTED)
+  notes           String?
+  submittedAt     DateTime      @default(now())
+  reviewedAt      DateTime?
+  paidAt          DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  partner         Partner       @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+
+  @@index([partnerId])
+  @@index([status])
+}
+
+enum ClaimStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  ADDITIONAL_INFO
+  APPROVED
+  PARTIALLY_APPROVED
+  DENIED
+  PAID
+  COMPLETED
 }
 enum Role {
   ADMIN
@@ -387,5 +473,3 @@ enum StoryStatus {
   PUBLISHED
   REJECTED
 }
-
-
