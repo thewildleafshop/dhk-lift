@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 
+// ✅ GET: Next.js 16 ke liye params Promise hain
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
@@ -12,8 +13,11 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // ✅ Await params
+    const { id } = await params;
+
     const claim = await prisma.claim.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: { partner: { select: { orgName: true } } },
     });
 
@@ -27,9 +31,10 @@ export async function GET(
   }
 }
 
+// ✅ PATCH: Next.js 16 ke liye params Promise hain
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
@@ -37,11 +42,13 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // ✅ Await params
+    const { id } = await params;
     const body = await req.json();
     const { status, notes } = body;
 
     const claim = await prisma.claim.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         status,
         notes,
